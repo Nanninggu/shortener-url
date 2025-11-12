@@ -41,41 +41,41 @@ public class UrlService {
         try {
             log.info("Creating short URL for: {}", request.getOriginalUrl());
             
-            // URL 검증
-            if (!urlValidationService.isValidUrl(request.getOriginalUrl())) {
+        // URL 검증
+        if (!urlValidationService.isValidUrl(request.getOriginalUrl())) {
                 log.warn("Invalid URL rejected: {}", request.getOriginalUrl());
-                throw new IllegalArgumentException("유효하지 않거나 안전하지 않은 URL입니다.");
-            }
-            
-            // 커스텀 단축 코드가 있는지 확인
-            String shortCode = request.getCustomCode() != null && !request.getCustomCode().isEmpty()
-                    ? request.getCustomCode()
-                    : generateShortCode(request.getOriginalUrl());
-            
+            throw new IllegalArgumentException("유효하지 않거나 안전하지 않은 URL입니다.");
+        }
+        
+        // 커스텀 단축 코드가 있는지 확인
+        String shortCode = request.getCustomCode() != null && !request.getCustomCode().isEmpty()
+                ? request.getCustomCode()
+                : generateShortCode(request.getOriginalUrl());
+        
             log.debug("Generated short code: {}", shortCode);
             
-            // 커스텀 코드 중복 체크
-            if (urlMapper.findByShortCode(shortCode).isPresent()) {
+        // 커스텀 코드 중복 체크
+        if (urlMapper.findByShortCode(shortCode).isPresent()) {
                 log.warn("Short code already exists: {}", shortCode);
-                throw new IllegalArgumentException("이미 사용 중인 단축 코드입니다.");
-            }
-            
-            // 만료일 설정
-            LocalDateTime expiresAt = null;
-            if (request.getExpirationDays() != null && request.getExpirationDays() > 0) {
-                expiresAt = LocalDateTime.now().plusDays(request.getExpirationDays());
-            }
+            throw new IllegalArgumentException("이미 사용 중인 단축 코드입니다.");
+        }
+        
+        // 만료일 설정
+        LocalDateTime expiresAt = null;
+        if (request.getExpirationDays() != null && request.getExpirationDays() > 0) {
+            expiresAt = LocalDateTime.now().plusDays(request.getExpirationDays());
+        }
 
-            Url url = Url.builder()
-                    .originalUrl(request.getOriginalUrl())
-                    .shortCode(shortCode)
-                    .clickCount(0L)
-                    .createdAt(LocalDateTime.now())
-                    .expiresAt(expiresAt)
-                    .build();
+        Url url = Url.builder()
+                .originalUrl(request.getOriginalUrl())
+                .shortCode(shortCode)
+                .clickCount(0L)
+                .createdAt(LocalDateTime.now())
+                .expiresAt(expiresAt)
+                .build();
 
             log.debug("Inserting URL into database: {}", url);
-            urlMapper.insert(url);
+        urlMapper.insert(url);
             log.debug("URL inserted successfully, ID: {}", url.getId());
 
             // ID가 설정되었는지 확인
@@ -205,8 +205,8 @@ public class UrlService {
                 return java.util.Collections.emptyList();
             }
             return urls.stream()
-                    .map(this::buildUrlResponse)
-                    .collect(Collectors.toList());
+                .map(this::buildUrlResponse)
+                .collect(Collectors.toList());
         } catch (Exception e) {
             log.error("Error getting all URLs: {}", e.getMessage(), e);
             return java.util.Collections.emptyList();
@@ -220,8 +220,8 @@ public class UrlService {
 
     public AdminStatsResponse getAdminStats() {
         try {
-            Long totalUrls = urlMapper.countAll();
-            Long totalClicks = urlMapper.sumClickCount();
+        Long totalUrls = urlMapper.countAll();
+        Long totalClicks = urlMapper.sumClickCount();
             
             // null 값 처리
             if (totalUrls == null) {
@@ -230,29 +230,29 @@ public class UrlService {
             if (totalClicks == null) {
                 totalClicks = 0L;
             }
-            
-            List<Url> allUrls = urlMapper.findAll();
-            LocalDateTime now = LocalDateTime.now();
-            
+        
+        List<Url> allUrls = urlMapper.findAll();
+        LocalDateTime now = LocalDateTime.now();
+        
             long activeUrls = 0;
             long expiredUrls = 0;
             
             if (allUrls != null) {
                 activeUrls = allUrls.stream()
-                        .filter(url -> url.getExpiresAt() == null || url.getExpiresAt().isAfter(now))
-                        .count();
-                
+                .filter(url -> url.getExpiresAt() == null || url.getExpiresAt().isAfter(now))
+                .count();
+        
                 expiredUrls = allUrls.stream()
-                        .filter(url -> url.getExpiresAt() != null && url.getExpiresAt().isBefore(now))
-                        .count();
+                .filter(url -> url.getExpiresAt() != null && url.getExpiresAt().isBefore(now))
+                .count();
             }
-            
-            return AdminStatsResponse.builder()
-                    .totalUrls(totalUrls)
-                    .totalClicks(totalClicks)
-                    .activeUrls(activeUrls)
-                    .expiredUrls(expiredUrls)
-                    .build();
+        
+        return AdminStatsResponse.builder()
+                .totalUrls(totalUrls)
+                .totalClicks(totalClicks)
+                .activeUrls(activeUrls)
+                .expiredUrls(expiredUrls)
+                .build();
         } catch (Exception e) {
             log.error("Error getting admin stats: {}", e.getMessage(), e);
             // 에러 발생 시 기본값 반환
@@ -300,17 +300,17 @@ public class UrlService {
                 throw new IllegalArgumentException("URL cannot be null");
             }
             
-            String shortUrl = buildShortUrl(url.getShortCode());
-            
-            return UrlResponse.builder()
-                    .id(url.getId())
-                    .originalUrl(url.getOriginalUrl())
-                    .shortUrl(shortUrl)
-                    .shortCode(url.getShortCode())
+        String shortUrl = buildShortUrl(url.getShortCode());
+        
+        return UrlResponse.builder()
+                .id(url.getId())
+                .originalUrl(url.getOriginalUrl())
+                .shortUrl(shortUrl)
+                .shortCode(url.getShortCode())
                     .clickCount(url.getClickCount() != null ? url.getClickCount() : 0L)
-                    .createdAt(url.getCreatedAt())
-                    .expiresAt(url.getExpiresAt())
-                    .build();
+                .createdAt(url.getCreatedAt())
+                .expiresAt(url.getExpiresAt())
+                .build();
         } catch (Exception e) {
             log.error("Error building URL response: {}", e.getMessage(), e);
             throw new RuntimeException("URL 응답 생성 중 오류가 발생했습니다: " + e.getMessage(), e);
