@@ -24,8 +24,34 @@ PUBLIC_IP="49.50.138.63"
 
 # 1. 필수 패키지 설치 확인
 echo -e "${YELLOW}[1/8] 필수 패키지 확인 및 설치...${NC}"
+
+# dpkg 잠금 해제 (필요한 경우)
+sudo dpkg --configure -a
+
+# nginx가 실행 중이면 중지
+if systemctl is-active --quiet nginx; then
+    echo "Nginx가 실행 중입니다. 중지합니다..."
+    sudo systemctl stop nginx
+fi
+
+# nginx 설정 문제 해결
+if [ -f /etc/nginx/sites-enabled/default ]; then
+    echo "기본 nginx 설정 파일 제거..."
+    sudo rm -f /etc/nginx/sites-enabled/default
+fi
+
+# 패키지 설치
 sudo apt-get update
-sudo apt-get install -y openjdk-17-jdk maven nodejs npm nginx postgresql postgresql-contrib git
+sudo apt-get install -y openjdk-17-jdk maven nodejs npm postgresql postgresql-contrib git
+
+# nginx 설치 (별도로 처리)
+echo "Nginx 설치 중..."
+sudo apt-get install -y nginx || {
+    echo -e "${RED}Nginx 설치 실패. 수동으로 수정합니다...${NC}"
+    sudo dpkg --configure -a
+    sudo apt-get install -f -y
+    sudo apt-get install -y nginx
+}
 
 # 2. 사용자 생성 (없는 경우)
 echo -e "${YELLOW}[2/8] 서비스 사용자 생성...${NC}"
@@ -93,11 +119,32 @@ sudo systemctl restart url-shortener
 
 # 9. Nginx 설정
 echo -e "${YELLOW}[9/9] Nginx 설정...${NC}"
-sudo cp $APP_DIR/springboot/nginx.conf /etc/nginx/sites-available/url-shortener
-sudo ln -sf /etc/nginx/sites-available/url-shortener /etc/nginx/sites-enabled/
+
+# 기존 설정 파일 백업
+if [ -f /etc/nginx/sites-available/url-shortener ]; then
+    sudo cp /etc/nginx/sites-available/url-shortener /etc/nginx/sites-available/url-shortener.backup
+fi
+
+# Nginx 설정 파일 복사
+sudo cp $BACKEND_DIR/nginx.conf /etc/nginx/sites-available/url-shortener
+
+# 기본 설정 제거
 sudo rm -f /etc/nginx/sites-enabled/default
-sudo nginx -t
-sudo systemctl restart nginx
+
+# 심볼릭 링크 생성
+sudo ln -sf /etc/nginx/sites-available/url-shortener /etc/nginx/sites-enabled/url-shortener
+
+# Nginx 설정 테스트
+echo "Nginx 설정 테스트 중..."
+if sudo nginx -t; then
+    echo -e "${GREEN}Nginx 설정이 올바릅니다.${NC}"
+    sudo systemctl restart nginx
+    sudo systemctl enable nginx
+else
+    echo -e "${RED}Nginx 설정에 오류가 있습니다. 수동으로 확인해주세요.${NC}"
+    echo "설정 파일: /etc/nginx/sites-available/url-shortener"
+    exit 1
+fi
 
 # 10. 방화벽 설정
 echo -e "${YELLOW}[10/10] 방화벽 설정...${NC}"
