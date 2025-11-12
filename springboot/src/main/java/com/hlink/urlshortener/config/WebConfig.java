@@ -15,11 +15,19 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins("http://localhost:3000", "http://localhost:5173")
+        // API 엔드포인트: 특정 origin만 허용 (credentials 필요)
+        registry.addMapping("/api/**")
+                .allowedOrigins("http://localhost:3000", "http://localhost:5173", "http://49.50.138.63", "https://49.50.138.63")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
+        
+        // 리다이렉트 엔드포인트: 모든 origin 허용 (credentials 불필요)
+        registry.addMapping("/{shortCode}")
+                .allowedOriginPatterns("*")
+                .allowedMethods("GET", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(false);
     }
 
     @Override

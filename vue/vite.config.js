@@ -13,6 +13,20 @@ export default defineConfig({
         rewrite: (path) => path
       }
     }
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false,
+    minify: 'terser',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vue-vendor': ['vue', 'vue-router'],
+          'ui-vendor': ['axios']
+        }
+      }
+    }
   }
 })
 

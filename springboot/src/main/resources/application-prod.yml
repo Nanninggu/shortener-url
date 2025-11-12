@@ -1,0 +1,58 @@
+# 프로덕션 환경 설정
+spring:
+  application:
+    name: url-shortener
+  datasource:
+    url: jdbc:postgresql://localhost:5432/url_shortener
+    username: ${DB_USERNAME:urlshortener}
+    password: ${DB_PASSWORD:your_secure_password_here}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: 8080
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+
+app:
+  base-url: ${APP_BASE_URL:http://49.50.138.63}
+  jwt:
+    secret: ${JWT_SECRET:hlink-secret-key-for-jwt-token-generation-minimum-256-bits-required-for-security-change-this-in-production}
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.hlink.urlshortener.model
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+
+logging:
+  level:
+    com.hlink.urlshortener: INFO
+    org.springframework.web: WARN
+    org.mybatis: WARN
+    root: INFO
+  file:
+    name: /opt/url-shortener/logs/application.log
+    max-size: 10MB
+    max-history: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+

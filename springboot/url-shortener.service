@@ -1,0 +1,27 @@
+[Unit]
+Description=H-Link URL Shortener Backend Service
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=urlshortener
+WorkingDirectory=/opt/url-shortener/springboot
+ExecStart=/usr/bin/java -jar /opt/url-shortener/springboot/target/url-shortener-1.0.0.jar
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=url-shortener
+
+# 환경 변수
+Environment="SPRING_PROFILES_ACTIVE=prod"
+Environment="DB_USERNAME=urlshortener"
+Environment="DB_PASSWORD=your_secure_password_here"
+Environment="APP_BASE_URL=http://49.50.138.63"
+
+# JVM 옵션
+Environment="JAVA_OPTS=-Xms512m -Xmx1024m -XX:+UseG1GC"
+
+[Install]
+WantedBy=multi-user.target
+

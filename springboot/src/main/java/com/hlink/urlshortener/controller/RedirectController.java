@@ -14,7 +14,6 @@ import java.util.Optional;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class RedirectController {
 
     private final UrlService urlService;
