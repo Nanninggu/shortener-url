@@ -53,6 +53,30 @@ sudo apt-get install -y nginx || {
     sudo apt-get install -y nginx
 }
 
+# Nginx IPv6 문제 해결
+echo "Nginx IPv6 설정 수정 중..."
+# 기본 설정 파일에서 IPv6 비활성화
+if [ -f /etc/nginx/sites-enabled/default ]; then
+    sudo sed -i 's/listen \[::\]:80 default_server;/# listen [::]:80 default_server;/g' /etc/nginx/sites-enabled/default
+    sudo sed -i 's/listen \[::\]:443 ssl default_server;/# listen [::]:443 ssl default_server;/g' /etc/nginx/sites-enabled/default
+    echo "기본 설정 파일에서 IPv6 비활성화 완료"
+fi
+
+# sites-available의 default 파일도 수정
+if [ -f /etc/nginx/sites-available/default ]; then
+    sudo sed -i 's/listen \[::\]:80 default_server;/# listen [::]:80 default_server;/g' /etc/nginx/sites-available/default
+    sudo sed -i 's/listen \[::\]:443 ssl default_server;/# listen [::]:443 ssl default_server;/g' /etc/nginx/sites-available/default
+    echo "sites-available 설정 파일에서 IPv6 비활성화 완료"
+fi
+
+# Nginx 설정 테스트
+if sudo nginx -t 2>/dev/null; then
+    echo "Nginx 설정이 올바릅니다."
+    sudo systemctl start nginx || true
+else
+    echo "Nginx 설정 테스트 실패, 계속 진행..."
+fi
+
 # 2. 사용자 생성 (없는 경우)
 echo -e "${YELLOW}[2/8] 서비스 사용자 생성...${NC}"
 if ! id "$SERVICE_USER" &>/dev/null; then
