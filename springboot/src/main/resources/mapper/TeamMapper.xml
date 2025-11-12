@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlink.urlshortener.mapper.TeamMapper">
+
+    <resultMap id="TeamResultMap" type="com.hlink.urlshortener.model.Team">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="ownerId" column="owner_id"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hlink.urlshortener.model.Team" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO teams (name, owner_id, created_at)
+        VALUES (#{name}, #{ownerId}, #{createdAt})
+    </insert>
+
+    <select id="findById" resultMap="TeamResultMap">
+        SELECT * FROM teams WHERE id = #{id}
+    </select>
+
+    <select id="findByOwnerId" resultMap="TeamResultMap">
+        SELECT * FROM teams WHERE owner_id = #{ownerId} ORDER BY created_at DESC
+    </select>
+
+    <select id="findByUserId" resultMap="TeamResultMap">
+        SELECT t.* FROM teams t
+        INNER JOIN team_members tm ON t.id = tm.team_id
+        WHERE tm.user_id = #{userId}
+        ORDER BY t.created_at DESC
+    </select>
+
+    <update id="update" parameterType="com.hlink.urlshortener.model.Team">
+        UPDATE teams
+        SET name = #{name}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM teams WHERE id = #{id}
+    </delete>
+
+</mapper>
+

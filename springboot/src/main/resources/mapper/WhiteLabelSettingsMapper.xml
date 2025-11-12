@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlink.urlshortener.mapper.WhiteLabelSettingsMapper">
+
+    <resultMap id="WhiteLabelSettingsResultMap" type="com.hlink.urlshortener.model.WhiteLabelSettings">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="teamId" column="team_id"/>
+        <result property="domain" column="domain"/>
+        <result property="brandName" column="brand_name"/>
+        <result property="logoUrl" column="logo_url"/>
+        <result property="primaryColor" column="primary_color"/>
+        <result property="secondaryColor" column="secondary_color"/>
+        <result property="customCss" column="custom_css"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hlink.urlshortener.model.WhiteLabelSettings" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO white_label_settings (user_id, team_id, domain, brand_name, logo_url, primary_color, secondary_color, custom_css, created_at, updated_at)
+        VALUES (#{userId}, #{teamId}, #{domain}, #{brandName}, #{logoUrl}, #{primaryColor}, #{secondaryColor}, #{customCss}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <select id="findByUserId" resultMap="WhiteLabelSettingsResultMap">
+        SELECT * FROM white_label_settings WHERE user_id = #{userId}
+    </select>
+
+    <select id="findByTeamId" resultMap="WhiteLabelSettingsResultMap">
+        SELECT * FROM white_label_settings WHERE team_id = #{teamId}
+    </select>
+
+    <update id="update" parameterType="com.hlink.urlshortener.model.WhiteLabelSettings">
+        UPDATE white_label_settings
+        SET domain = #{domain},
+            brand_name = #{brandName},
+            logo_url = #{logoUrl},
+            primary_color = #{primaryColor},
+            secondary_color = #{secondaryColor},
+            custom_css = #{customCss},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteByUserId">
+        DELETE FROM white_label_settings WHERE user_id = #{userId}
+    </delete>
+
+</mapper>
+

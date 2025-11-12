@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlink.urlshortener.mapper.UrlMapper">
+
+    <resultMap id="UrlResultMap" type="com.hlink.urlshortener.model.Url">
+        <id property="id" column="id"/>
+        <result property="originalUrl" column="original_url"/>
+        <result property="shortCode" column="short_code"/>
+        <result property="clickCount" column="click_count"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="expiresAt" column="expires_at"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hlink.urlshortener.model.Url" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO urls (original_url, short_code, click_count, created_at, expires_at)
+        VALUES (#{originalUrl}, #{shortCode}, #{clickCount}, #{createdAt}, #{expiresAt})
+    </insert>
+
+    <select id="findByShortCode" resultMap="UrlResultMap">
+        SELECT id, original_url, short_code, click_count, created_at, expires_at
+        FROM urls
+        WHERE short_code = #{shortCode}
+    </select>
+
+    <select id="findById" resultMap="UrlResultMap">
+        SELECT id, original_url, short_code, click_count, created_at, expires_at
+        FROM urls
+        WHERE id = #{id}
+    </select>
+
+    <update id="updateClickCount">
+        UPDATE urls
+        SET click_count = click_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <select id="findAll" resultMap="UrlResultMap">
+        SELECT id, original_url, short_code, click_count, created_at, expires_at
+        FROM urls
+        ORDER BY created_at DESC
+    </select>
+
+    <delete id="deleteExpiredUrls">
+        DELETE FROM urls
+        WHERE expires_at IS NOT NULL AND expires_at &lt; NOW()
+    </delete>
+
+    <delete id="deleteById">
+        DELETE FROM urls
+        WHERE id = #{id}
+    </delete>
+
+    <select id="countAll" resultType="Long">
+        SELECT COUNT(*) FROM urls
+    </select>
+
+    <select id="sumClickCount" resultType="Long">
+        SELECT COALESCE(SUM(click_count), 0) FROM urls
+    </select>
+
+</mapper>
+

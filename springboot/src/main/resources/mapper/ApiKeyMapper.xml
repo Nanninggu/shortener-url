@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlink.urlshortener.mapper.ApiKeyMapper">
+
+    <resultMap id="ApiKeyResultMap" type="com.hlink.urlshortener.model.ApiKey">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="teamId" column="team_id"/>
+        <result property="keyName" column="key_name"/>
+        <result property="apiKey" column="api_key"/>
+        <result property="permissions" column="permissions"/>
+        <result property="rateLimit" column="rate_limit"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="expiresAt" column="expires_at"/>
+        <result property="isActive" column="is_active"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hlink.urlshortener.model.ApiKey" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO api_keys (user_id, team_id, key_name, api_key, permissions, rate_limit, created_at, expires_at, is_active)
+        VALUES (#{userId}, #{teamId}, #{keyName}, #{apiKey}, #{permissions}, #{rateLimit}, #{createdAt}, #{expiresAt}, #{isActive})
+    </insert>
+
+    <select id="findById" resultMap="ApiKeyResultMap">
+        SELECT * FROM api_keys WHERE id = #{id}
+    </select>
+
+    <select id="findByApiKey" resultMap="ApiKeyResultMap">
+        SELECT * FROM api_keys WHERE api_key = #{apiKey} AND is_active = TRUE
+    </select>
+
+    <select id="findByUserId" resultMap="ApiKeyResultMap">
+        SELECT * FROM api_keys WHERE user_id = #{userId} ORDER BY created_at DESC
+    </select>
+
+    <select id="findByTeamId" resultMap="ApiKeyResultMap">
+        SELECT * FROM api_keys WHERE team_id = #{teamId} ORDER BY created_at DESC
+    </select>
+
+    <update id="update" parameterType="com.hlink.urlshortener.model.ApiKey">
+        UPDATE api_keys
+        SET key_name = #{keyName},
+            permissions = #{permissions},
+            rate_limit = #{rateLimit},
+            expires_at = #{expiresAt},
+            is_active = #{isActive}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM api_keys WHERE id = #{id}
+    </delete>
+
+</mapper>
+

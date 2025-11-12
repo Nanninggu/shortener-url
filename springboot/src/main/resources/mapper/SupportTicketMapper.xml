@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlink.urlshortener.mapper.SupportTicketMapper">
+
+    <resultMap id="SupportTicketResultMap" type="com.hlink.urlshortener.model.SupportTicket">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="subject" column="subject"/>
+        <result property="description" column="description"/>
+        <result property="priority" column="priority"/>
+        <result property="status" column="status"/>
+        <result property="assignedTo" column="assigned_to"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hlink.urlshortener.model.SupportTicket" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO support_tickets (user_id, subject, description, priority, status, assigned_to, created_at, updated_at)
+        VALUES (#{userId}, #{subject}, #{description}, #{priority}, #{status}, #{assignedTo}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <select id="findById" resultMap="SupportTicketResultMap">
+        SELECT * FROM support_tickets WHERE id = #{id}
+    </select>
+
+    <select id="findByUserId" resultMap="SupportTicketResultMap">
+        SELECT * FROM support_tickets WHERE user_id = #{userId} ORDER BY created_at DESC
+    </select>
+
+    <select id="findByAssignedTo" resultMap="SupportTicketResultMap">
+        SELECT * FROM support_tickets WHERE assigned_to = #{assignedTo} ORDER BY created_at DESC
+    </select>
+
+    <select id="findByStatus" resultMap="SupportTicketResultMap">
+        SELECT * FROM support_tickets WHERE status = #{status} ORDER BY created_at DESC
+    </select>
+
+    <select id="findAll" resultMap="SupportTicketResultMap">
+        SELECT * FROM support_tickets ORDER BY created_at DESC
+    </select>
+
+    <update id="update" parameterType="com.hlink.urlshortener.model.SupportTicket">
+        UPDATE support_tickets
+        SET subject = #{subject},
+            description = #{description},
+            priority = #{priority},
+            status = #{status},
+            assigned_to = #{assignedTo},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM support_tickets WHERE id = #{id}
+    </delete>
+
+</mapper>
+
