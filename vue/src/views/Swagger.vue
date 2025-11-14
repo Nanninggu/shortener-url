@@ -62,14 +62,12 @@ export default {
     swaggerUrl() {
       // 환경에 따라 다른 Swagger UI URL 사용
       if (import.meta.env.PROD && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        // 프로덕션: Nginx를 통해 접근 (같은 origin)
-        return '/swagger-ui/index.html'
+        // 프로덕션: Spring Boot 포트로 직접 접근 (nginx 우회하여 리디렉션 문제 해결)
+        const hostname = window.location.hostname;
+        return `http://${hostname}:8080/swagger-ui/index.html`;
       } else {
         // 개발 환경: Vite 프록시를 통해 접근 (같은 origin으로 처리)
-        // Vite 프록시 설정이 필요하므로 /swagger-ui 경로도 프록시에 추가해야 함
-        // 일단 직접 접근하되, X-Frame-Options: SAMEORIGIN이므로 다른 origin에서는 작동하지 않을 수 있음
-        // 대안: Vite 프록시에 /swagger-ui 경로 추가
-        return '/swagger-ui/index.html'
+        return '/swagger-ui/index.html';
       }
     }
   },
