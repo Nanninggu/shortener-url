@@ -61,3 +61,30 @@ management:
     health:
       show-details: when-authorized
 
+# Swagger/OpenAPI 설정 (프로덕션)
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui/index.html
+    enabled: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+    config-url: /v3/api-docs/swagger-config
+    # 기본 예제 비활성화 (Petstore 제거) - 강제 적용
+    disable-swagger-default-url: true
+    try-it-out-enabled: true
+    filter: true
+    # 현재 애플리케이션 API만 표시 (Petstore 완전 제거)
+    urls:
+      - url: /v3/api-docs
+        name: H-Link URL Shortener API
+    urls-primary-name: H-Link URL Shortener API
+    use-root-path: false
+    # 기본 예제 URL 완전 제거
+    default-url: /v3/api-docs
+  packages-to-scan: com.hlink.urlshortener.controller
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+
