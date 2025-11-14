@@ -23,6 +23,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/actuator/**", "/api/urls", "/api/qrcode/**", "/api/stats/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**", "/swagger-ui-custom.css", "/swagger-ui-init.js").permitAll()
+                // Swagger UI 정적 리소스 경로 (상대 경로로 요청되는 리소스들)
+                .requestMatchers("/index.css", "/swagger-initializer.js", "/swagger-ui-bundle.js", "/swagger-ui-standalone-preset.js", "/swagger-ui.css").permitAll()
                 .requestMatchers("/api/swagger-ui/**", "/api/v3/api-docs/**", "/api/swagger-resources/**", "/api/webjars/**").permitAll()
                 .requestMatchers(request -> {
                     String method = request.getMethod();
