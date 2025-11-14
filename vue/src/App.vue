@@ -183,9 +183,15 @@ export default {
       return this.userRole === 'ADMIN' || this.username === 'admin'
     },
     swaggerUrl() {
-      // API 서비스에서 사용하는 base URL 가져오기
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
-      return `${apiBaseUrl}/swagger-ui/index.html`
+      // 프로덕션에서는 상대 경로 사용, 로컬에서는 절대 경로 사용
+      if (import.meta.env.PROD) {
+        // 프로덕션: Nginx를 통해 직접 접근
+        return '/swagger-ui/index.html'
+      } else {
+        // 로컬 개발: 백엔드 서버로 직접 접근
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+        return `${apiBaseUrl}/swagger-ui/index.html`
+      }
     }
   },
   mounted() {
