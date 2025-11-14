@@ -69,6 +69,8 @@ springdoc:
   swagger-ui:
     path: /swagger-ui/index.html
     enabled: true
+    # 리다이렉트 방지: root-path를 사용하여 리다이렉트 루프 방지
+    root-path: /swagger-ui
     tags-sorter: alpha
     operations-sorter: alpha
     config-url: /v3/api-docs/swagger-config
