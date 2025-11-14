@@ -49,8 +49,8 @@ public class OpenApiConfig {
                                 .url("http://localhost:8080")
                                 .description("로컬 개발 서버"),
                         new Server()
-                                .url("http://49.50.138.63")
-                                .description("프로덕션 서버")
+                                .url("http://223.130.157.227")
+                                .description("프로덕션 서버 (NCP VM)")
                 ))
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName,

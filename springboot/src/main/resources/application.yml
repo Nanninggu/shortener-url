@@ -65,15 +65,17 @@ springdoc:
     operations-sorter: alpha
     # 커스텀 CSS 적용 (shadcn 스타일)
     config-url: /v3/api-docs/swagger-config
-    # 기본 예제 비활성화
+    # 기본 예제 비활성화 (Petstore 제거)
     disable-swagger-default-url: true
+    # 기본 URL 제거
+    try-it-out-enabled: true
+    filter: true
     # 현재 애플리케이션 API만 표시
     urls:
       - url: /v3/api-docs
         name: H-Link URL Shortener API
-    # Swagger UI 리소스 경로 명시 (상대 경로 문제 해결)
-    # 리소스가 /webjars/swagger-ui/{version}/ 에서 제공되도록 설정
-    use-root-path: false
+    # 기본 URL 목록 비활성화
+    urls-primary-name: H-Link URL Shortener API
   # 패키지 스캔 경로 명시
   packages-to-scan: com.hlink.urlshortener.controller
   # 기본 예제 비활성화
