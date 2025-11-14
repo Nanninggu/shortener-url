@@ -19,6 +19,19 @@ public class SwaggerUiFilter implements Filter {
         <script>
         // Swagger UI 커스텀 CSS 주입 및 기본 Petstore 제거
         (function() {
+          // 즉시 실행 - Swagger UI 초기화 전에 실행
+          (function() {
+            // window.SwaggerUIBundle이 로드되기 전에 기본 URL 설정을 오버라이드
+            const originalFetch = window.fetch;
+            window.fetch = function(...args) {
+              const url = args[0];
+              if (typeof url === 'string' && url.includes('petstore')) {
+                args[0] = '/v3/api-docs';
+              }
+              return originalFetch.apply(this, args);
+            };
+          })();
+          
           function injectCustomCSS() {
             if (document.getElementById('swagger-ui-custom-css')) {
               return;
@@ -49,17 +62,39 @@ public class SwaggerUiFilter implements Filter {
             }
             
             // DOM에서 Petstore 관련 요소 제거
-            const petstoreElements = document.querySelectorAll('[data-name*="petstore"], [data-name*="Petstore"], [data-url*="petstore"]');
-            petstoreElements.forEach(el => el.remove());
+            const petstoreElements = document.querySelectorAll('[data-name*="petstore"], [data-name*="Petstore"], [data-url*="petstore"], [href*="petstore"]');
+            petstoreElements.forEach(el => {
+              if (el.tagName === 'OPTION' || el.tagName === 'A') {
+                el.remove();
+              }
+            });
             
-            // URL 입력 필드에서 Petstore URL 제거
+            // URL 입력 필드에서 Petstore URL 제거 및 강제 설정
             const urlInput = document.querySelector('.download-url-wrapper input');
-            if (urlInput && urlInput.value && urlInput.value.includes('petstore')) {
-              urlInput.value = '/v3/api-docs';
-              if (urlInput.onchange) {
-                urlInput.onchange();
+            if (urlInput) {
+              if (urlInput.value && urlInput.value.includes('petstore')) {
+                urlInput.value = '/v3/api-docs';
+                // 이벤트 트리거
+                urlInput.dispatchEvent(new Event('change', { bubbles: true }));
+                urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+              }
+              // 값이 비어있거나 petstore가 아닌 경우에도 강제 설정
+              if (!urlInput.value || urlInput.value.trim() === '') {
+                urlInput.value = '/v3/api-docs';
+                urlInput.dispatchEvent(new Event('change', { bubbles: true }));
               }
             }
+            
+            // select 요소에서 Petstore 옵션 제거
+            const selectElements = document.querySelectorAll('select');
+            selectElements.forEach(select => {
+              const options = select.querySelectorAll('option');
+              options.forEach(option => {
+                if (option.value && option.value.includes('petstore')) {
+                  option.remove();
+                }
+              });
+            });
           }
           
           // 즉시 실행
@@ -69,13 +104,19 @@ public class SwaggerUiFilter implements Filter {
           if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
               injectCustomCSS();
+              removeDefaultPetstore();
+              setTimeout(removeDefaultPetstore, 100);
               setTimeout(removeDefaultPetstore, 500);
-              setTimeout(removeDefaultPetstore, 1500);
+              setTimeout(removeDefaultPetstore, 1000);
+              setTimeout(removeDefaultPetstore, 2000);
               setTimeout(removeDefaultPetstore, 3000);
             });
           } else {
+            removeDefaultPetstore();
+            setTimeout(removeDefaultPetstore, 100);
             setTimeout(removeDefaultPetstore, 500);
-            setTimeout(removeDefaultPetstore, 1500);
+            setTimeout(removeDefaultPetstore, 1000);
+            setTimeout(removeDefaultPetstore, 2000);
             setTimeout(removeDefaultPetstore, 3000);
           }
           
@@ -87,21 +128,26 @@ public class SwaggerUiFilter implements Filter {
           
           observer.observe(document.body, {
             childList: true,
-            subtree: true
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['value', 'href']
           });
           
           // Swagger UI 초기화 후에도 주입
           window.addEventListener('load', function() {
             injectCustomCSS();
+            removeDefaultPetstore();
+            setTimeout(removeDefaultPetstore, 100);
+            setTimeout(removeDefaultPetstore, 500);
             setTimeout(removeDefaultPetstore, 1000);
             setTimeout(removeDefaultPetstore, 2000);
             setTimeout(removeDefaultPetstore, 4000);
           });
           
-          // Swagger UI 완전히 로드된 후에도 한 번 더 확인
-          setTimeout(function() {
+          // Swagger UI 완전히 로드된 후에도 지속적으로 확인
+          setInterval(function() {
             removeDefaultPetstore();
-          }, 5000);
+          }, 2000);
         })();
         </script>
         """;
@@ -114,8 +160,11 @@ public class SwaggerUiFilter implements Filter {
 
         String path = httpRequest.getRequestURI();
         
-        // Swagger UI HTML 페이지인지 확인
-        if (path != null && path.contains("/swagger-ui/index.html")) {
+        // Swagger UI HTML 페이지인지 확인 (다양한 경로 패턴 지원)
+        if (path != null && (path.contains("/swagger-ui/index.html") 
+                || path.equals("/swagger-ui/") 
+                || path.equals("/swagger-ui")
+                || path.endsWith("/swagger-ui/index.html"))) {
             // 응답을 가로채서 스크립트 주입
             ResponseWrapper responseWrapper = new ResponseWrapper(httpResponse);
             chain.doFilter(request, responseWrapper);
