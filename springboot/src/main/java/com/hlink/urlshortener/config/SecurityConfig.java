@@ -1,6 +1,7 @@
 package com.hlink.urlshortener.config;
 
 import com.hlink.urlshortener.filter.JwtAuthenticationFilter;
+import com.hlink.urlshortener.filter.SwaggerFrameOptionsFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,14 +17,20 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http, 
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            SwaggerFrameOptionsFilter swaggerFrameOptionsFilter) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // X-Frame-Options를 SAMEORIGIN으로 설정하여 iframe에서 표시 가능하도록 함
+            // Swagger UI 경로는 SwaggerFrameOptionsFilter에서 처리
             .headers(headers -> headers
                 .frameOptions(frameOptions -> frameOptions.sameOrigin())
             )
+            // Swagger UI 경로에 대해서만 X-Frame-Options를 제거하는 필터를 Security 필터 체인 이후에 추가
+            .addFilterAfter(swaggerFrameOptionsFilter, org.springframework.security.web.header.HeaderWriterFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/actuator/**", "/api/urls", "/api/qrcode/**", "/api/stats/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**", "/swagger-ui-custom.css", "/swagger-ui-init.js").permitAll()
