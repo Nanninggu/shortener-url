@@ -71,6 +71,9 @@ springdoc:
     urls:
       - url: /v3/api-docs
         name: H-Link URL Shortener API
+    # Swagger UI 리소스 경로 명시 (상대 경로 문제 해결)
+    # 리소스가 /webjars/swagger-ui/{version}/ 에서 제공되도록 설정
+    use-root-path: false
   # 패키지 스캔 경로 명시
   packages-to-scan: com.hlink.urlshortener.controller
   # 기본 예제 비활성화
