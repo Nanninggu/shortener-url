@@ -24,13 +24,15 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // X-Frame-Options를 SAMEORIGIN으로 설정하여 iframe에서 표시 가능하도록 함
-            // Swagger UI 경로는 SwaggerFrameOptionsFilter에서 처리
+            // X-Frame-Options를 완전히 비활성화
+            // Swagger UI 경로는 X-Frame-Options 헤더가 없어야 하고,
+            // 다른 경로는 FrameOptionsFilter에서 수동으로 설정
             .headers(headers -> headers
-                .frameOptions(frameOptions -> frameOptions.sameOrigin())
+                .frameOptions(frameOptions -> frameOptions.disable())
             )
-            // Swagger UI 경로에 대해서만 X-Frame-Options를 제거하는 필터를 Security 필터 체인 이후에 추가
-            .addFilterAfter(swaggerFrameOptionsFilter, org.springframework.security.web.header.HeaderWriterFilter.class)
+            // Swagger UI 경로에 대해서는 X-Frame-Options 헤더를 설정하지 않음
+            // 다른 경로에 대해서는 FrameOptionsFilter에서 SAMEORIGIN 설정
+            .addFilterBefore(swaggerFrameOptionsFilter, org.springframework.security.web.header.HeaderWriterFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/actuator/**", "/api/urls", "/api/qrcode/**", "/api/stats/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**", "/swagger-ui-custom.css", "/swagger-ui-init.js").permitAll()
