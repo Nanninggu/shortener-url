@@ -89,17 +89,26 @@
               </router-link>
             </template>
             
-            <!-- API 문서 (모든 사용자 접근 가능, 개발자 문서) -->
-            <a
-              :href="swaggerUrl"
-              target="_blank"
-              rel="noopener noreferrer"
+            <!-- Swagger UI (모든 사용자 접근 가능) -->
+            <router-link
+              to="/swagger"
               class="inline-flex items-center gap-2 justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-accent"
-              title="API 문서 (새 탭에서 열림)"
+              title="Swagger UI"
+            >
+              <Document class="h-4 w-4" />
+              Swagger
+            </router-link>
+            
+            <!-- API 문서 (관리자 전용) -->
+            <router-link
+              v-if="isAdmin"
+              to="/api-docs"
+              class="inline-flex items-center gap-2 justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-accent"
+              title="API 문서 (관리자 전용)"
             >
               <Document class="h-4 w-4" />
               API 문서
-            </a>
+            </router-link>
             
             <!-- 다크모드 토글 버튼 -->
             <button
@@ -154,7 +163,7 @@
     <footer class="border-t bg-card mt-auto">
       <div class="container mx-auto px-4 py-6">
         <p class="text-center text-sm text-muted-foreground">
-          &copy; 2024 H-Link. URL Shortener Service
+          &copy; 2025 H-Link. URL Shortener Service
         </p>
       </div>
     </footer>
@@ -181,17 +190,6 @@ export default {
     isAdmin() {
       // admin 계정(username이 'admin') 또는 ADMIN 역할이면 관리자로 인식
       return this.userRole === 'ADMIN' || this.username === 'admin'
-    },
-    swaggerUrl() {
-      // 프로덕션에서는 상대 경로 사용, 로컬에서는 절대 경로 사용
-      if (import.meta.env.PROD) {
-        // 프로덕션: Nginx를 통해 직접 접근
-        return '/swagger-ui/index.html'
-      } else {
-        // 로컬 개발: 백엔드 서버로 직접 접근
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
-        return `${apiBaseUrl}/swagger-ui/index.html`
-      }
     }
   },
   mounted() {

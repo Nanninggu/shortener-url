@@ -46,19 +46,30 @@ public class SwaggerUiFilter implements Filter {
           
           function removeDefaultPetstore() {
             // Swagger UI 초기화 전에 기본 URL 제거
-            if (window.ui && window.ui.getSystem) {
-              const system = window.ui.getSystem();
-              if (system && system.specSelectors) {
-                const urls = system.specSelectors.url();
-                if (urls && urls.length > 0) {
-                  const filteredUrls = urls.filter(url => 
-                    !url.url || !url.url.includes('petstore')
-                  );
-                  if (filteredUrls.length < urls.length) {
-                    system.specActions.updateSpecUrl(filteredUrls[0]?.url || '/v3/api-docs');
+            try {
+              if (window.ui && window.ui.getSystem) {
+                const system = window.ui.getSystem();
+                if (system && system.specSelectors) {
+                  const urls = system.specSelectors.url();
+                  // urls가 배열인지 확인
+                  if (urls && Array.isArray(urls) && urls.length > 0) {
+                    const filteredUrls = urls.filter(url => 
+                      url && (!url.url || !url.url.includes('petstore'))
+                    );
+                    if (filteredUrls.length < urls.length && system.specActions) {
+                      system.specActions.updateSpecUrl(filteredUrls[0]?.url || '/v3/api-docs');
+                    }
+                  } else if (urls && typeof urls === 'string' && urls.includes('petstore')) {
+                    // urls가 문자열인 경우
+                    if (system.specActions) {
+                      system.specActions.updateSpecUrl('/v3/api-docs');
+                    }
                   }
                 }
               }
+            } catch (e) {
+              // 에러 무시 (Swagger UI가 아직 초기화되지 않았을 수 있음)
+              console.debug('Swagger UI not ready yet:', e);
             }
             
             // DOM에서 Petstore 관련 요소 제거
@@ -121,17 +132,36 @@ public class SwaggerUiFilter implements Filter {
           }
           
           // Swagger UI가 동적으로 로드되는 경우를 대비
-          const observer = new MutationObserver(function(mutations) {
-            injectCustomCSS();
-            removeDefaultPetstore();
-          });
+          function setupObserver() {
+            if (document.body) {
+              try {
+                const observer = new MutationObserver(function(mutations) {
+                  injectCustomCSS();
+                  removeDefaultPetstore();
+                });
+                
+                observer.observe(document.body, {
+                  childList: true,
+                  subtree: true,
+                  attributes: true,
+                  attributeFilter: ['value', 'href']
+                });
+              } catch (e) {
+                console.debug('MutationObserver setup failed:', e);
+              }
+            }
+          }
           
-          observer.observe(document.body, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['value', 'href']
-          });
+          // document.body가 준비될 때까지 대기
+          if (document.body) {
+            setupObserver();
+          } else {
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', setupObserver);
+            } else {
+              setTimeout(setupObserver, 100);
+            }
+          }
           
           // Swagger UI 초기화 후에도 주입
           window.addEventListener('load', function() {

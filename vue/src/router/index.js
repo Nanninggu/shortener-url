@@ -27,7 +27,13 @@ const routes = [
   {
     path: '/api-docs',
     name: 'ApiDocs',
-    component: ApiDocs
+    component: ApiDocs,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/swagger',
+    name: 'Swagger',
+    component: () => import('../views/Swagger.vue')
   },
   {
     path: '/admin',

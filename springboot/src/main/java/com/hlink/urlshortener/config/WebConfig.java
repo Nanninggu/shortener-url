@@ -48,8 +48,15 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Swagger UI 커스텀 CSS 및 JS 파일 제공
-        registry.addResourceHandler("/swagger-ui-custom.css", "/swagger-ui-init.js")
-                .addResourceLocations("classpath:/static/");
+        registry.addResourceHandler("/swagger-ui-custom.css")
+                .addResourceLocations("classpath:/static/")
+                .setCachePeriod(3600)
+                .resourceChain(true);
+        
+        registry.addResourceHandler("/swagger-ui-init.js")
+                .addResourceLocations("classpath:/static/")
+                .setCachePeriod(3600)
+                .resourceChain(true);
     }
 }
 
