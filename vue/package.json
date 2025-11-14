@@ -11,7 +11,9 @@
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
     "axios": "^1.6.2",
+    "chart.js": "^4.5.1",
     "vue": "^3.3.4",
+    "vue-chartjs": "^5.3.3",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {

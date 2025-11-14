@@ -17,6 +17,7 @@ import java.util.Map;
 public class TargetingService {
 
     private final UserAgentParser userAgentParser;
+    private final GeoLocationService geoLocationService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
@@ -37,19 +38,25 @@ public class TargetingService {
             String acceptLanguage = request.getHeader("Accept-Language");
             String language = parseLanguage(acceptLanguage);
 
-            // 1. 기기별 타겟팅
+            // 1. 지역별 타겟팅 (가장 우선순위)
+            String regionUrl = getRegionTargetedUrl(settingsMap, request);
+            if (regionUrl != null) {
+                return regionUrl;
+            }
+
+            // 2. 기기별 타겟팅
             String deviceUrl = getDeviceTargetedUrl(settingsMap, userAgent);
             if (deviceUrl != null) {
                 return deviceUrl;
             }
 
-            // 2. 언어별 타겟팅
+            // 3. 언어별 타겟팅
             String languageUrl = getLanguageTargetedUrl(settingsMap, language);
             if (languageUrl != null) {
                 return languageUrl;
             }
 
-            // 3. 모바일 딥링킹
+            // 4. 모바일 딥링킹
             String deeplinkUrl = getDeeplinkUrl(settingsMap, userAgent);
             if (deeplinkUrl != null) {
                 return deeplinkUrl;
@@ -122,6 +129,37 @@ public class TargetingService {
             return languageRedirects.get(language.toLowerCase());
         } catch (Exception e) {
             log.error("Error parsing language redirects: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private String getRegionTargetedUrl(Map<String, Object> settings, HttpServletRequest request) {
+        try {
+            Map<String, String> regionRedirects = (Map<String, String>) settings.get("region_redirects");
+            if (regionRedirects == null || regionRedirects.isEmpty()) {
+                return null;
+            }
+
+            // IP에서 국가 코드 추출
+            String countryCode = geoLocationService.getCountryCodeFromRequest(request);
+            if (countryCode == null || countryCode.equals("Unknown")) {
+                return null;
+            }
+
+            // 국가 코드로 리디렉션 URL 찾기 (대소문자 무시)
+            String regionUrl = regionRedirects.get(countryCode.toUpperCase());
+            if (regionUrl == null) {
+                regionUrl = regionRedirects.get(countryCode.toLowerCase());
+            }
+            
+            if (regionUrl != null && !regionUrl.isEmpty()) {
+                log.debug("Region targeting matched: {} -> {}", countryCode, regionUrl);
+                return regionUrl;
+            }
+
+            return null;
+        } catch (Exception e) {
+            log.error("Error parsing region redirects: {}", e.getMessage());
             return null;
         }
     }

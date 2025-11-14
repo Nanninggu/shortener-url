@@ -1,6 +1,6 @@
 [Unit]
 Description=H-Link URL Shortener Backend Service
-After=network.target postgresql.service
+After=network.target
 
 [Service]
 Type=simple
@@ -15,9 +15,8 @@ SyslogIdentifier=url-shortener
 
 # 환경 변수
 Environment="SPRING_PROFILES_ACTIVE=prod"
-Environment="DB_USERNAME=urlshortener"
-Environment="DB_PASSWORD=your_secure_password_here"
-Environment="APP_BASE_URL=http://49.50.138.63"
+Environment="H2_PASSWORD="
+Environment="APP_BASE_URL=http://223.130.157.227:8080"
 
 # JVM 옵션
 Environment="JAVA_OPTS=-Xms512m -Xmx1024m -XX:+UseG1GC"

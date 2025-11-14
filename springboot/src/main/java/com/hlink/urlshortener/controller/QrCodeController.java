@@ -6,6 +6,7 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.hlink.urlshortener.service.UrlService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,11 +23,12 @@ import java.net.NetworkInterface;
 import java.util.Enumeration;
 import java.util.Optional;
 
+@Tag(name = "QR 코드", description = "QR 코드 생성 API")
 @Slf4j
 @RestController
 @RequestMapping("/api/qrcode")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {"http://localhost:3000", "http://223.130.157.227:3000", "http://223.130.157.227"})
 public class QrCodeController {
 
     private final UrlService urlService;

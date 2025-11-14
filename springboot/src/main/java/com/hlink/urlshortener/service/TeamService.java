@@ -82,5 +82,13 @@ public class TeamService {
     public void deleteTeam(Long id) {
         teamMapper.deleteById(id);
     }
+
+    public List<TeamMember> getTeamMembers(Long teamId) {
+        return teamMemberMapper.findByTeamId(teamId);
+    }
+
+    public List<Team> findAll() {
+        return teamMapper.findAll();
+    }
 }
 

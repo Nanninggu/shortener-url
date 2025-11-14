@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -66,6 +67,15 @@ public class WhiteLabelService {
     @Transactional
     public void deleteSettings(Long userId) {
         whiteLabelSettingsMapper.deleteByUserId(userId);
+    }
+
+    public List<WhiteLabelSettings> findAll() {
+        return whiteLabelSettingsMapper.findAll();
+    }
+
+    @Transactional
+    public void deleteSettingsById(Long id) {
+        whiteLabelSettingsMapper.deleteById(id);
     }
 }
 

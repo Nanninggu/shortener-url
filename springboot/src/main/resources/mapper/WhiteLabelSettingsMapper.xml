@@ -31,6 +31,18 @@
         SELECT * FROM white_label_settings WHERE team_id = #{teamId}
     </select>
 
+    <select id="findByDomain" resultMap="WhiteLabelSettingsResultMap">
+        SELECT * FROM white_label_settings WHERE domain = #{domain} AND team_id IS NULL
+    </select>
+
+    <select id="findByTeamDomain" resultMap="WhiteLabelSettingsResultMap">
+        SELECT * FROM white_label_settings WHERE domain = #{domain} AND team_id IS NOT NULL
+    </select>
+
+    <select id="findAll" resultMap="WhiteLabelSettingsResultMap">
+        SELECT * FROM white_label_settings ORDER BY created_at DESC
+    </select>
+
     <update id="update" parameterType="com.hlink.urlshortener.model.WhiteLabelSettings">
         UPDATE white_label_settings
         SET domain = #{domain},
@@ -45,6 +57,10 @@
 
     <delete id="deleteByUserId">
         DELETE FROM white_label_settings WHERE user_id = #{userId}
+    </delete>
+
+    <delete id="deleteById">
+        DELETE FROM white_label_settings WHERE id = #{id}
     </delete>
 
 </mapper>

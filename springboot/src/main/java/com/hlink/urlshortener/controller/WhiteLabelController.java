@@ -14,7 +14,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/white-label")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "http://223.130.157.227:3000", "http://223.130.157.227", "http://49.50.138.63", "https://49.50.138.63"})
 public class WhiteLabelController {
 
     private final WhiteLabelService whiteLabelService;

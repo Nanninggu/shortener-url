@@ -17,6 +17,11 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        // OPTIONS 요청은 CORS preflight이므로 rate limit 적용하지 않음
+        if ("OPTIONS".equals(request.getMethod())) {
+            return true;
+        }
+        
         String ipAddress = getClientIpAddress(request);
         Bucket bucket = rateLimitConfig.resolveBucket(ipAddress);
 

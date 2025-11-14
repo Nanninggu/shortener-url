@@ -14,7 +14,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -36,10 +37,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String username = claims.getSubject();
                 String role = claims.get("role", String.class);
                 
+                List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+                
+                // admin 계정은 모든 권한 부여
+                if ("ADMIN".equals(role) || "admin".equals(username)) {
+                    authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                    authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+                    authorities.add(new SimpleGrantedAuthority("ROLE_ACCOUNT_MANAGER"));
+                }
+                
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     username,
                     null,
-                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role))
+                    authorities
                 );
                 
                 SecurityContextHolder.getContext().setAuthentication(authentication);

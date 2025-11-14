@@ -18,5 +18,7 @@ public class Url {
     private Long clickCount;
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
+    private Long userId;
+    private Long teamId;
 }
 

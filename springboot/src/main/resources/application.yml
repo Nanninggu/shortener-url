@@ -2,10 +2,22 @@ spring:
   application:
     name: url-shortener
   datasource:
-    url: jdbc:postgresql://localhost:5432/url_shortener
-    username: ${DB_USERNAME:${USER}}
-    password: ${DB_PASSWORD:}
-    driver-class-name: org.postgresql.Driver
+    # H2 데이터베이스 사용 (Embedded 모드)
+    url: jdbc:h2:file:./data/url_shortener;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;INIT=CREATE SCHEMA IF NOT EXISTS PUBLIC\;SET SCHEMA PUBLIC
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true  # 외부 접근 허용
+  sql:
+    init:
+      mode: always
+      continue-on-error: true
+      schema-locations: classpath:db/schema-h2.sql
   jackson:
     serialization:
       write-dates-as-timestamps: false
@@ -40,4 +52,28 @@ management:
   endpoint:
     health:
       show-details: always
+
+# Swagger/OpenAPI 설정
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+    # 커스텀 CSS 적용 (shadcn 스타일)
+    config-url: /v3/api-docs/swagger-config
+    # 기본 예제 비활성화
+    disable-swagger-default-url: true
+    # 현재 애플리케이션 API만 표시
+    urls:
+      - url: /v3/api-docs
+        name: H-Link URL Shortener API
+  # 패키지 스캔 경로 명시
+  packages-to-scan: com.hlink.urlshortener.controller
+  # 기본 예제 비활성화
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
 

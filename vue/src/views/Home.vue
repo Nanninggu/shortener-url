@@ -45,32 +45,40 @@
             </div>
           </div>
           
-          <button
-            type="submit"
-            :disabled="loading"
-            class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full"
-          >
-            {{ loading ? '생성 중...' : '단축 URL 생성' }}
-          </button>
+          <div class="flex gap-2">
+            <button
+              type="submit"
+              :disabled="loading"
+              class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 flex-1"
+            >
+              {{ loading ? '생성 중...' : '단축 URL 생성' }}
+            </button>
+            <router-link
+              to="/urls/create"
+              class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2"
+            >
+              고급 옵션
+            </router-link>
+          </div>
         </form>
         
         <!-- Success Result -->
         <div v-if="shortUrl" class="mt-8 pt-8 border-t space-y-4">
-          <div class="rounded-md bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 p-4">
+          <div class="rounded-md bg-primary/10 border border-primary/20 p-4">
             <div class="flex items-center gap-2 mb-4">
-              <CircleCheck class="h-5 w-5 text-green-600 dark:text-green-400" />
-              <h3 class="text-lg font-semibold text-green-900 dark:text-green-100">단축 URL이 생성되었습니다!</h3>
+              <CircleCheck class="h-5 w-5 text-primary" />
+              <h3 class="text-lg font-semibold text-foreground">단축 URL이 생성되었습니다!</h3>
             </div>
             
             <div class="flex gap-2 mb-4">
               <input
                 :value="shortUrl"
                 readonly
-                class="flex h-10 flex-1 rounded-md border border-green-300 dark:border-green-700 bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                class="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               />
               <button
                 @click="copyToClipboard"
-                class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-green-600 text-white hover:bg-green-700 h-10 px-4 py-2"
+                class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
               >
                 <CopyDocument v-if="!copied" class="h-4 w-4" />
                 <CircleCheck v-else class="h-4 w-4" />
@@ -195,11 +203,11 @@ export default {
       this.shortUrl = ''
       
       try {
-        const response = await urlService.createShortUrl(
-          this.originalUrl,
-          this.expirationDays,
-          this.customCode || null
-        )
+        const response = await urlService.createShortUrl({
+          originalUrl: this.originalUrl,
+          expirationDays: this.expirationDays || null,
+          customCode: this.customCode || null
+        })
         
         this.shortUrl = response.data.shortUrl
         this.shortCode = response.data.shortCode

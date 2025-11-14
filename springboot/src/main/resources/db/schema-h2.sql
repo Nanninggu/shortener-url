@@ -31,9 +31,13 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(50) DEFAULT 'USER',
     plan_type VARCHAR(50) DEFAULT 'FREE',
+    enabled BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- enabled 컬럼 추가 (기존 테이블에 컬럼이 없는 경우)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS enabled BOOLEAN DEFAULT TRUE;
 
 -- 팀 테이블
 CREATE TABLE IF NOT EXISTS teams (
@@ -78,8 +82,8 @@ CREATE TABLE IF NOT EXISTS url_settings (
 -- URL 소유권 테이블
 ALTER TABLE urls ADD COLUMN IF NOT EXISTS user_id BIGINT;
 ALTER TABLE urls ADD COLUMN IF NOT EXISTS team_id BIGINT;
-ALTER TABLE urls ADD CONSTRAINT fk_url_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
-ALTER TABLE urls ADD CONSTRAINT fk_url_team FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL;
+-- 제약조건 추가 (이미 존재하면 오류 무시)
+-- H2에서는 제약조건 존재 여부를 직접 체크하기 어려우므로, 스키마 초기화 모드를 'never'로 설정하여 중복 실행 방지
 
 -- 클릭 통계 확장 (기기 정보 추가)
 ALTER TABLE url_clicks ADD COLUMN IF NOT EXISTS device_type VARCHAR(50);

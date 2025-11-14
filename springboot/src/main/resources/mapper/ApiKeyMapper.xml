@@ -38,6 +38,10 @@
         SELECT * FROM api_keys WHERE team_id = #{teamId} ORDER BY created_at DESC
     </select>
 
+    <select id="findAll" resultMap="ApiKeyResultMap">
+        SELECT * FROM api_keys ORDER BY created_at DESC
+    </select>
+
     <update id="update" parameterType="com.hlink.urlshortener.model.ApiKey">
         UPDATE api_keys
         SET key_name = #{keyName},
@@ -45,6 +49,12 @@
             rate_limit = #{rateLimit},
             expires_at = #{expiresAt},
             is_active = #{isActive}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateActiveStatus">
+        UPDATE api_keys
+        SET is_active = #{isActive}
         WHERE id = #{id}
     </update>
 

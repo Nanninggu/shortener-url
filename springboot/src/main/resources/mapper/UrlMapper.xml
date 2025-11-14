@@ -11,21 +11,31 @@
         <result property="clickCount" column="click_count"/>
         <result property="createdAt" column="created_at"/>
         <result property="expiresAt" column="expires_at"/>
+        <result property="userId" column="user_id"/>
+        <result property="teamId" column="team_id"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.hlink.urlshortener.model.Url" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO urls (original_url, short_code, click_count, created_at, expires_at)
-        VALUES (#{originalUrl}, #{shortCode}, #{clickCount}, #{createdAt}, #{expiresAt})
+        INSERT INTO urls (original_url, short_code, click_count, created_at, expires_at, user_id, team_id)
+        VALUES (#{originalUrl}, #{shortCode}, #{clickCount}, #{createdAt}, #{expiresAt}, #{userId}, #{teamId})
     </insert>
 
     <select id="findByShortCode" resultMap="UrlResultMap">
-        SELECT id, original_url, short_code, click_count, created_at, expires_at
+        SELECT id, original_url, short_code, click_count, created_at, expires_at, user_id, team_id
         FROM urls
         WHERE short_code = #{shortCode}
     </select>
 
+    <select id="findByOriginalUrl" resultMap="UrlResultMap">
+        SELECT id, original_url, short_code, click_count, created_at, expires_at, user_id, team_id
+        FROM urls
+        WHERE original_url = #{originalUrl}
+        ORDER BY created_at DESC
+        LIMIT 1
+    </select>
+
     <select id="findById" resultMap="UrlResultMap">
-        SELECT id, original_url, short_code, click_count, created_at, expires_at
+        SELECT id, original_url, short_code, click_count, created_at, expires_at, user_id, team_id
         FROM urls
         WHERE id = #{id}
     </select>
@@ -37,9 +47,75 @@
     </update>
 
     <select id="findAll" resultMap="UrlResultMap">
-        SELECT id, original_url, short_code, click_count, created_at, expires_at
+        SELECT id, original_url, short_code, click_count, created_at, expires_at, user_id, team_id
         FROM urls
         ORDER BY created_at DESC
+    </select>
+
+    <select id="findAllWithPaging" resultMap="UrlResultMap">
+        SELECT id, original_url, short_code, click_count, created_at, expires_at, user_id, team_id
+        FROM urls
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="findAllWithPagingAndFilter" resultMap="UrlResultMap">
+        SELECT id, original_url, short_code, click_count, created_at, expires_at, user_id, team_id
+        FROM urls
+        <where>
+            <if test="searchQuery != null and searchQuery != ''">
+                AND (
+                    LOWER(original_url) LIKE LOWER(CONCAT('%', #{searchQuery}, '%'))
+                    OR LOWER(short_code) LIKE LOWER(CONCAT('%', #{searchQuery}, '%'))
+                )
+            </if>
+            <if test="statusFilter != null and statusFilter != '' and statusFilter != 'all'">
+                <if test="statusFilter == 'active'">
+                    AND (expires_at IS NULL OR expires_at > NOW())
+                </if>
+                <if test="statusFilter == 'expired'">
+                    AND expires_at IS NOT NULL AND expires_at &lt;= NOW()
+                </if>
+            </if>
+        </where>
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countAllWithFilter" resultType="Long">
+        SELECT COUNT(*)
+        FROM urls
+        <where>
+            <if test="searchQuery != null and searchQuery != ''">
+                AND (
+                    LOWER(original_url) LIKE LOWER(CONCAT('%', #{searchQuery}, '%'))
+                    OR LOWER(short_code) LIKE LOWER(CONCAT('%', #{searchQuery}, '%'))
+                )
+            </if>
+            <if test="statusFilter != null and statusFilter != '' and statusFilter != 'all'">
+                <if test="statusFilter == 'active'">
+                    AND (expires_at IS NULL OR expires_at > NOW())
+                </if>
+                <if test="statusFilter == 'expired'">
+                    AND expires_at IS NOT NULL AND expires_at &lt;= NOW()
+                </if>
+            </if>
+        </where>
+    </select>
+
+    <select id="findByUserId" resultMap="UrlResultMap">
+        SELECT id, original_url, short_code, click_count, created_at, expires_at, user_id, team_id
+        FROM urls
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="countByUserId" resultType="Long">
+        SELECT COUNT(*) FROM urls WHERE user_id = #{userId}
+    </select>
+
+    <select id="sumClickCountByUserId" resultType="Long">
+        SELECT COALESCE(SUM(click_count), 0) FROM urls WHERE user_id = #{userId}
     </select>
 
     <delete id="deleteExpiredUrls">
@@ -61,4 +137,5 @@
     </select>
 
 </mapper>
+
 

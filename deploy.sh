@@ -21,7 +21,7 @@ APP_DIR="/opt/url-shortener"
 BACKEND_DIR="$APP_DIR/springboot"
 FRONTEND_DIR="$APP_DIR/vue"
 SERVICE_USER="urlshortener"
-PUBLIC_IP="49.50.138.63"
+PUBLIC_IP="223.130.157.227"
 
 # 1. 필수 패키지 설치 확인
 echo -e "${YELLOW}[1/8] 필수 패키지 확인 및 설치...${NC}"
@@ -43,7 +43,7 @@ fi
 
 # 패키지 설치
 sudo apt-get update
-sudo apt-get install -y openjdk-17-jdk maven nodejs npm postgresql postgresql-contrib git
+sudo apt-get install -y openjdk-17-jdk maven nodejs npm git
 
 # nginx 설치 (별도로 처리)
 echo "Nginx 설치 중..."
@@ -98,50 +98,14 @@ echo -e "${YELLOW}[4/8] 프로젝트 파일 복사...${NC}"
 sudo -u $SERVICE_USER cp -r springboot $APP_DIR/
 sudo -u $SERVICE_USER cp -r vue $APP_DIR/
 
-# 5. PostgreSQL 데이터베이스 설정
-echo -e "${YELLOW}[5/10] PostgreSQL 데이터베이스 설정...${NC}"
+# 5. H2 데이터베이스 디렉토리 생성
+echo -e "${YELLOW}[5/10] H2 데이터베이스 디렉토리 생성...${NC}"
 
-# PostgreSQL 서비스 시작 확인
-if ! systemctl is-active --quiet postgresql; then
-    echo "PostgreSQL 서비스 시작 중..."
-    sudo systemctl start postgresql
-    sleep 2
-fi
-
-# 데이터베이스 및 사용자 생성
-sudo -u postgres psql <<EOF 2>/dev/null
--- 데이터베이스 생성 (이미 있으면 무시)
-SELECT 'CREATE DATABASE url_shortener'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'url_shortener')\gexec
-
--- 사용자 생성 (필요한 경우)
-DO \$\$
-BEGIN
-  IF NOT EXISTS (SELECT FROM pg_user WHERE usename = 'urlshortener') THEN
-    CREATE USER urlshortener WITH PASSWORD 'your_secure_password_here';
-  END IF;
-END
-\$\$;
-
--- 권한 부여
-GRANT ALL PRIVILEGES ON DATABASE url_shortener TO urlshortener;
-ALTER DATABASE url_shortener OWNER TO urlshortener;
-\q
-EOF
-
-# 스키마 실행 (테이블이 없을 때만)
-if [ -f "$BACKEND_DIR/src/main/resources/db/schema.sql" ]; then
-    echo "데이터베이스 스키마 확인 중..."
-    TABLE_COUNT=$(sudo -u postgres psql -d url_shortener -tAc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" 2>/dev/null || echo "0")
-    if [ "$TABLE_COUNT" = "0" ] || [ -z "$TABLE_COUNT" ]; then
-        echo "스키마 실행 중..."
-        sudo -u postgres psql -d url_shortener -f $BACKEND_DIR/src/main/resources/db/schema.sql 2>/dev/null || {
-            echo -e "${YELLOW}스키마 실행 중 일부 오류가 발생했을 수 있습니다. 계속 진행합니다.${NC}"
-        }
-    else
-        echo "데이터베이스 테이블이 이미 존재합니다. 스키마 실행을 건너뜁니다."
-    fi
-fi
+# H2 데이터베이스 파일이 저장될 디렉토리 생성
+H2_DATA_DIR="$APP_DIR/data"
+sudo mkdir -p $H2_DATA_DIR
+sudo chown -R $SERVICE_USER:$SERVICE_USER $H2_DATA_DIR
+echo "H2 데이터베이스 디렉토리 생성 완료: $H2_DATA_DIR"
 
 # 6. 백엔드 빌드
 echo -e "${YELLOW}[6/10] 백엔드 빌드...${NC}"
@@ -205,7 +169,8 @@ fi
 
 # 빌드 실행
 echo "프론트엔드 빌드 중... (시간이 걸릴 수 있습니다)"
-if sudo -u $SERVICE_USER npm run build; then
+# Nginx 프록시를 사용하므로 상대 경로 /api 사용
+if sudo -u $SERVICE_USER env VITE_API_BASE_URL=/api npm run build; then
     if [ -d "$FRONTEND_DIR/dist" ]; then
         echo -e "${GREEN}프론트엔드 빌드 완료${NC}"
     else
@@ -326,23 +291,17 @@ else
     exit 1
 fi
 
-# 10. 방화벽 설정
-echo -e "${YELLOW}[10/10] 방화벽 설정...${NC}"
+# 10. 방화벽 규칙 설정 (활성화하지 않음)
+echo -e "${YELLOW}[10/10] 방화벽 규칙 설정...${NC}"
 
 # UFW가 설치되어 있는지 확인
 if command -v ufw &> /dev/null; then
-    echo "방화벽 규칙 설정 중..."
+    echo "방화벽 규칙 설정 중 (방화벽은 활성화하지 않음)..."
     sudo ufw --force allow 22/tcp   # SSH
     sudo ufw --force allow 80/tcp   # HTTP
     sudo ufw --force allow 443/tcp  # HTTPS
-    
-    # UFW 활성화 (비활성화되어 있는 경우)
-    if ! sudo ufw status | grep -q "Status: active"; then
-        echo "방화벽 활성화 중..."
-        echo "y" | sudo ufw enable
-    else
-        echo "방화벽이 이미 활성화되어 있습니다."
-    fi
+    echo "방화벽 규칙이 설정되었습니다. (방화벽은 활성화되지 않음)"
+    echo "필요한 경우 수동으로 'sudo ufw enable'을 실행하세요."
 else
     echo -e "${YELLOW}UFW가 설치되지 않았습니다. 방화벽 설정을 건너뜁니다.${NC}"
     echo "NCP 콘솔에서 포트 80, 443을 열어주세요."

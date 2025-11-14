@@ -11,13 +11,14 @@
         <result property="passwordHash" column="password_hash"/>
         <result property="role" column="role"/>
         <result property="planType" column="plan_type"/>
+        <result property="enabled" column="enabled"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.hlink.urlshortener.model.User" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO users (username, email, password_hash, role, plan_type, created_at, updated_at)
-        VALUES (#{username}, #{email}, #{passwordHash}, #{role}, #{planType}, #{createdAt}, #{updatedAt})
+        INSERT INTO users (username, email, password_hash, role, plan_type, enabled, created_at, updated_at)
+        VALUES (#{username}, #{email}, #{passwordHash}, #{role}, #{planType}, #{enabled}, #{createdAt}, #{updatedAt})
     </insert>
 
     <select id="findById" resultMap="UserResultMap">
@@ -43,7 +44,29 @@
             password_hash = #{passwordHash},
             role = #{role},
             plan_type = #{planType},
+            enabled = #{enabled},
             updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <update id="toggleEnabled">
+        UPDATE users
+        SET enabled = CASE WHEN enabled IS NULL OR enabled = FALSE THEN TRUE ELSE FALSE END,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateRole">
+        UPDATE users
+        SET role = #{role},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <update id="updatePlanType">
+        UPDATE users
+        SET plan_type = #{planType},
+            updated_at = CURRENT_TIMESTAMP
         WHERE id = #{id}
     </update>
 

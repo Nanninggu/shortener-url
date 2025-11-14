@@ -37,8 +37,36 @@
         SELECT * FROM support_tickets WHERE status = #{status} ORDER BY created_at DESC
     </select>
 
+    <select id="findByPriority" resultMap="SupportTicketResultMap">
+        SELECT * FROM support_tickets WHERE priority = #{priority} ORDER BY created_at DESC
+    </select>
+
     <select id="findAll" resultMap="SupportTicketResultMap">
         SELECT * FROM support_tickets ORDER BY created_at DESC
+    </select>
+
+    <select id="findAllWithPaging" resultMap="SupportTicketResultMap">
+        SELECT * FROM support_tickets ORDER BY created_at DESC LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="findByUserIdWithPaging" resultMap="SupportTicketResultMap">
+        SELECT * FROM support_tickets WHERE user_id = #{userId} ORDER BY created_at DESC LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="findByPriorityWithPaging" resultMap="SupportTicketResultMap">
+        SELECT * FROM support_tickets WHERE priority = #{priority} ORDER BY created_at DESC LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAll" resultType="long">
+        SELECT COUNT(*) FROM support_tickets
+    </select>
+
+    <select id="countByUserId" resultType="long">
+        SELECT COUNT(*) FROM support_tickets WHERE user_id = #{userId}
+    </select>
+
+    <select id="countByPriority" resultType="long">
+        SELECT COUNT(*) FROM support_tickets WHERE priority = #{priority}
     </select>
 
     <update id="update" parameterType="com.hlink.urlshortener.model.SupportTicket">

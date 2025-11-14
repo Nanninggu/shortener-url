@@ -27,85 +27,85 @@
 
     <select id="getClicksByHour" resultType="map">
         SELECT 
-            EXTRACT(HOUR FROM clicked_at) as hour,
-            COUNT(*) as count
+            CAST(FORMATDATETIME(clicked_at, 'HH') AS INTEGER) as "hour",
+            COUNT(*) as "count"
         FROM url_clicks
         WHERE url_id = #{urlId}
         AND clicked_at >= #{startDate}
-        GROUP BY EXTRACT(HOUR FROM clicked_at)
-        ORDER BY hour
+        GROUP BY CAST(FORMATDATETIME(clicked_at, 'HH') AS INTEGER)
+        ORDER BY "hour"
     </select>
 
     <select id="getClicksByCountry" resultType="map">
         SELECT 
-            COALESCE(country, 'Unknown') as country,
-            COUNT(*) as count
+            COALESCE(country, 'Unknown') as "country",
+            COUNT(*) as "count"
         FROM url_clicks
         WHERE url_id = #{urlId}
         GROUP BY country
-        ORDER BY count DESC
+        ORDER BY "count" DESC
     </select>
 
     <select id="getClicksByDate" resultType="map">
         SELECT 
-            DATE(clicked_at) as date,
-            COUNT(*) as count
+            CAST(clicked_at AS DATE) as "date",
+            COUNT(*) as "count"
         FROM url_clicks
         WHERE url_id = #{urlId}
         AND clicked_at >= #{startDate}
-        GROUP BY DATE(clicked_at)
-        ORDER BY date DESC
+        GROUP BY CAST(clicked_at AS DATE)
+        ORDER BY "date" DESC
     </select>
 
     <select id="getClicksByDeviceType" resultType="map">
         SELECT 
-            COALESCE(device_type, 'Unknown') as device_type,
-            COUNT(*) as count
+            COALESCE(device_type, 'Unknown') as "deviceType",
+            COUNT(*) as "count"
         FROM url_clicks
         WHERE url_id = #{urlId}
         GROUP BY device_type
-        ORDER BY count DESC
+        ORDER BY "count" DESC
     </select>
 
     <select id="getClicksByBrowser" resultType="map">
         SELECT 
-            COALESCE(browser, 'Unknown') as browser,
-            COUNT(*) as count
+            COALESCE(browser, 'Unknown') as "browser",
+            COUNT(*) as "count"
         FROM url_clicks
         WHERE url_id = #{urlId}
         GROUP BY browser
-        ORDER BY count DESC
+        ORDER BY "count" DESC
     </select>
 
     <select id="getClicksByOS" resultType="map">
         SELECT 
-            COALESCE(os, 'Unknown') as os,
-            COUNT(*) as count
+            COALESCE(os, 'Unknown') as "os",
+            COUNT(*) as "count"
         FROM url_clicks
         WHERE url_id = #{urlId}
         GROUP BY os
-        ORDER BY count DESC
+        ORDER BY "count" DESC
     </select>
 
     <select id="getClicksByReferer" resultType="map">
         SELECT 
-            COALESCE(referer, 'Direct') as referer,
-            COUNT(*) as count
+            COALESCE(referer, 'Direct') as "referer",
+            COUNT(*) as "count"
         FROM url_clicks
         WHERE url_id = #{urlId}
         GROUP BY referer
-        ORDER BY count DESC
+        ORDER BY "count" DESC
         LIMIT 20
     </select>
 
     <select id="getClicksByCity" resultType="map">
         SELECT 
-            COALESCE(city, 'Unknown') as city,
-            COUNT(*) as count
+            COALESCE(city, 'Unknown') as "city",
+            COUNT(*) as "count"
         FROM url_clicks
         WHERE url_id = #{urlId}
         GROUP BY city
-        ORDER BY count DESC
+        ORDER BY "count" DESC
         LIMIT 20
     </select>
 

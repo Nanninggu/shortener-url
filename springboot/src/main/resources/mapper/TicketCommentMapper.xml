@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlink.urlshortener.mapper.TicketCommentMapper">
+
+    <resultMap id="TicketCommentResultMap" type="com.hlink.urlshortener.model.TicketComment">
+        <id property="id" column="id"/>
+        <result property="ticketId" column="ticket_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="comment" column="comment"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hlink.urlshortener.model.TicketComment" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO ticket_comments (ticket_id, user_id, comment, created_at)
+        VALUES (#{ticketId}, #{userId}, #{comment}, #{createdAt})
+    </insert>
+
+    <select id="findByTicketId" resultMap="TicketCommentResultMap">
+        SELECT * FROM ticket_comments WHERE ticket_id = #{ticketId} ORDER BY created_at ASC
+    </select>
+
+    <select id="findById" resultMap="TicketCommentResultMap">
+        SELECT * FROM ticket_comments WHERE id = #{id}
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM ticket_comments WHERE id = #{id}
+    </delete>
+
+</mapper>
+

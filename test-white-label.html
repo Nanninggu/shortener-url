@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>화이트라벨 설정 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        textarea {
+            min-height: 100px;
+            font-family: monospace;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>화이트라벨 설정 테스트</h1>
+        
+        <div class="form-group">
+            <label>사용자 ID:</label>
+            <input type="number" id="userId" value="1" placeholder="사용자 ID 입력">
+        </div>
+
+        <div class="form-group">
+            <label>인증 토큰 (선택사항):</label>
+            <input type="text" id="authToken" placeholder="Bearer 토큰 입력 (없으면 로그인 필요)">
+        </div>
+
+        <hr style="margin: 30px 0;">
+
+        <h2>화이트라벨 설정</h2>
+        
+        <form id="whiteLabelForm">
+            <div class="form-group">
+                <label>브랜드 도메인 *</label>
+                <input type="text" id="domain" value="test.example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label>브랜드 이름</label>
+                <input type="text" id="brandName" value="테스트 브랜드">
+            </div>
+
+            <div class="form-group">
+                <label>로고 URL</label>
+                <input type="url" id="logoUrl" value="https://via.placeholder.com/200">
+            </div>
+
+            <div class="form-group">
+                <label>주요 색상</label>
+                <input type="color" id="primaryColor" value="#007bff">
+            </div>
+
+            <div class="form-group">
+                <label>보조 색상</label>
+                <input type="color" id="secondaryColor" value="#6c757d">
+            </div>
+
+            <div class="form-group">
+                <label>커스텀 CSS</label>
+                <textarea id="customCss">.brand-header {
+    background: var(--primary-color);
+    color: white;
+    padding: 20px;
+}
+
+.brand-logo {
+    max-width: 200px;
+    height: auto;
+}</textarea>
+            </div>
+
+            <button type="button" onclick="loadSettings()">설정 불러오기</button>
+            <button type="button" onclick="saveSettings()">설정 저장</button>
+        </form>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+
+        async function getAuthToken() {
+            const token = document.getElementById('authToken').value.trim();
+            if (token) {
+                return token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+            }
+            return null;
+        }
+
+        async function makeRequest(method, url, data = null) {
+            const token = await getAuthToken();
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            if (token) {
+                options.headers['Authorization'] = token;
+            }
+
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+
+            try {
+                const response = await fetch(url, options);
+                const result = await response.json();
+                return { status: response.status, data: result };
+            } catch (error) {
+                return { status: 0, error: error.message };
+            }
+        }
+
+        async function loadSettings() {
+            const userId = document.getElementById('userId').value;
+            if (!userId) {
+                showResult('사용자 ID를 입력해주세요.', 'error');
+                return;
+            }
+
+            showResult('설정을 불러오는 중...', 'info');
+            
+            const result = await makeRequest('GET', `${API_BASE}/white-label/user/${userId}`);
+            
+            if (result.status === 200) {
+                const settings = result.data;
+                document.getElementById('domain').value = settings.domain || '';
+                document.getElementById('brandName').value = settings.brandName || '';
+                document.getElementById('logoUrl').value = settings.logoUrl || '';
+                document.getElementById('primaryColor').value = settings.primaryColor || '#000000';
+                document.getElementById('secondaryColor').value = settings.secondaryColor || '#ffffff';
+                document.getElementById('customCss').value = settings.customCss || '';
+                showResult('설정을 성공적으로 불러왔습니다.\n\n' + JSON.stringify(settings, null, 2), 'success');
+            } else if (result.status === 404) {
+                showResult('저장된 설정이 없습니다. 새로 생성할 수 있습니다.', 'info');
+            } else {
+                showResult(`설정 불러오기 실패 (${result.status}):\n${JSON.stringify(result.data, null, 2)}`, 'error');
+            }
+        }
+
+        async function saveSettings() {
+            const userId = document.getElementById('userId').value;
+            if (!userId) {
+                showResult('사용자 ID를 입력해주세요.', 'error');
+                return;
+            }
+
+            const domain = document.getElementById('domain').value;
+            if (!domain) {
+                showResult('브랜드 도메인은 필수입니다.', 'error');
+                return;
+            }
+
+            const settings = {
+                domain: domain,
+                brandName: document.getElementById('brandName').value,
+                logoUrl: document.getElementById('logoUrl').value,
+                primaryColor: document.getElementById('primaryColor').value,
+                secondaryColor: document.getElementById('secondaryColor').value,
+                customCss: document.getElementById('customCss').value
+            };
+
+            showResult('설정을 저장하는 중...', 'info');
+
+            const result = await makeRequest('POST', `${API_BASE}/white-label?userId=${userId}`, settings);
+            
+            if (result.status === 200) {
+                showResult('설정이 성공적으로 저장되었습니다!\n\n' + JSON.stringify(result.data, null, 2), 'success');
+            } else {
+                showResult(`설정 저장 실패 (${result.status}):\n${JSON.stringify(result.data, null, 2)}`, 'error');
+            }
+        }
+
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `<pre>${message}</pre>`;
+        }
+    </script>
+</body>
+</html>
+

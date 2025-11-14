@@ -86,8 +86,8 @@
                 <code class="text-sm bg-background px-2 py-1 rounded">http://localhost:8080/my-link</code>
               </div>
             </div>
-            <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md p-3 mt-3">
-              <p class="text-sm text-yellow-800 dark:text-yellow-200">
+            <div class="bg-muted/50 border border-border rounded-md p-3 mt-3">
+              <p class="text-sm text-foreground">
                 ⚠️ <strong>주의:</strong> 커스텀 코드는 중복될 수 없습니다. 이미 사용 중인 코드는 다른 코드를 선택해야 합니다.
               </p>
             </div>
@@ -313,15 +313,17 @@
       <div class="flex justify-center gap-4">
         <router-link
           to="/"
-          class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2"
+          class="inline-flex items-center gap-2 justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2"
         >
-          ← 홈으로
+          <ArrowLeft class="h-4 w-4" />
+          홈으로
         </router-link>
         <router-link
           to="/api-docs"
-          class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+          class="inline-flex items-center gap-2 justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
         >
-          API 문서 보기 →
+          API 문서 보기
+          <ArrowRight class="h-4 w-4" />
         </router-link>
       </div>
     </div>

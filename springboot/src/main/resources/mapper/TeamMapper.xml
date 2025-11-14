@@ -31,6 +31,10 @@
         ORDER BY t.created_at DESC
     </select>
 
+    <select id="findAll" resultMap="TeamResultMap">
+        SELECT * FROM teams ORDER BY created_at DESC
+    </select>
+
     <update id="update" parameterType="com.hlink.urlshortener.model.Team">
         UPDATE teams
         SET name = #{name}

@@ -1,0 +1,400 @@
+/* Swagger UI shadcn 스타일 커스터마이징 */
+
+/* 전역 변수 (shadcn 색상 시스템) */
+:root {
+  --swagger-bg: hsl(0 0% 100%);
+  --swagger-foreground: hsl(222.2 84% 4.9%);
+  --swagger-card: hsl(0 0% 100%);
+  --swagger-primary: hsl(221.2 83.2% 53.3%);
+  --swagger-primary-foreground: hsl(210 40% 98%);
+  --swagger-secondary: hsl(210 40% 96.1%);
+  --swagger-muted: hsl(210 40% 96.1%);
+  --swagger-muted-foreground: hsl(215.4 16.3% 46.9%);
+  --swagger-border: hsl(214.3 31.8% 91.4%);
+  --swagger-radius: 0.5rem;
+  --swagger-destructive: hsl(0 84.2% 60.2%);
+}
+
+/* 다크모드 지원 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --swagger-bg: hsl(222.2 84% 4.9%);
+    --swagger-foreground: hsl(210 40% 98%);
+    --swagger-card: hsl(222.2 84% 4.9%);
+    --swagger-secondary: hsl(217.2 32.6% 17.5%);
+    --swagger-muted: hsl(217.2 32.6% 17.5%);
+    --swagger-muted-foreground: hsl(215.4 16.3% 46.9%);
+    --swagger-border: hsl(217.2 32.6% 17.5%);
+  }
+}
+
+/* Swagger UI 컨테이너 */
+.swagger-ui {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--swagger-bg);
+  color: var(--swagger-foreground);
+  font-feature-settings: "rlig" 1, "calt" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 타이틀 및 헤더 */
+.swagger-ui .topbar {
+  background: var(--swagger-card);
+  border-bottom: 1px solid var(--swagger-border);
+  padding: 1rem 1.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.swagger-ui .topbar .download-url-wrapper {
+  background: transparent;
+}
+
+.swagger-ui .topbar .download-url-wrapper input {
+  border: 1px solid var(--swagger-border);
+  border-radius: var(--swagger-radius);
+  padding: 0.5rem 0.75rem;
+  background: var(--swagger-bg);
+  color: var(--swagger-foreground);
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.swagger-ui .topbar .download-url-wrapper input:focus {
+  outline: none;
+  border-color: var(--swagger-primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* 정보 섹션 */
+.swagger-ui .info {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: var(--swagger-card);
+  border: 1px solid var(--swagger-border);
+  border-radius: var(--swagger-radius);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.swagger-ui .info hgroup.main a {
+  color: var(--swagger-primary);
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.swagger-ui .info hgroup.main a:hover {
+  opacity: 0.8;
+}
+
+/* 태그 및 엔드포인트 */
+.swagger-ui .opblock-tag {
+  background: var(--swagger-card);
+  border: 1px solid var(--swagger-border);
+  border-radius: var(--swagger-radius);
+  margin: 1rem 0;
+  padding: 1rem 1.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.swagger-ui .opblock-tag:hover {
+  background: var(--swagger-muted);
+}
+
+.swagger-ui .opblock {
+  background: var(--swagger-card);
+  border: 1px solid var(--swagger-border);
+  border-radius: var(--swagger-radius);
+  margin: 0.5rem 0;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+}
+
+.swagger-ui .opblock:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.swagger-ui .opblock.opblock-post {
+  border-left: 4px solid var(--swagger-primary);
+}
+
+.swagger-ui .opblock.opblock-get {
+  border-left: 4px solid #10b981;
+}
+
+.swagger-ui .opblock.opblock-put {
+  border-left: 4px solid #f59e0b;
+}
+
+.swagger-ui .opblock.opblock-delete {
+  border-left: 4px solid var(--swagger-destructive);
+}
+
+.swagger-ui .opblock.opblock-patch {
+  border-left: 4px solid #8b5cf6;
+}
+
+/* 버튼 스타일 (shadcn 스타일) */
+.swagger-ui .btn {
+  background: var(--swagger-primary);
+  color: var(--swagger-primary-foreground);
+  border: none;
+  border-radius: var(--swagger-radius);
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.swagger-ui .btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.swagger-ui .btn:active {
+  transform: translateY(0);
+}
+
+.swagger-ui .btn.execute {
+  background: var(--swagger-primary);
+  color: var(--swagger-primary-foreground);
+}
+
+.swagger-ui .btn.cancel {
+  background: var(--swagger-secondary);
+  color: var(--swagger-foreground);
+}
+
+.swagger-ui .btn.authorize {
+  background: var(--swagger-primary);
+  color: var(--swagger-primary-foreground);
+}
+
+/* 입력 필드 (shadcn 스타일) */
+.swagger-ui input[type=text],
+.swagger-ui input[type=password],
+.swagger-ui input[type=search],
+.swagger-ui input[type=email],
+.swagger-ui input[type=number],
+.swagger-ui textarea,
+.swagger-ui select {
+  border: 1px solid var(--swagger-border);
+  border-radius: var(--swagger-radius);
+  padding: 0.5rem 0.75rem;
+  background: var(--swagger-bg);
+  color: var(--swagger-foreground);
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.swagger-ui input:focus,
+.swagger-ui textarea:focus,
+.swagger-ui select:focus {
+  outline: none;
+  border-color: var(--swagger-primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.swagger-ui input::placeholder,
+.swagger-ui textarea::placeholder {
+  color: var(--swagger-muted-foreground);
+}
+
+/* 테이블 스타일 */
+.swagger-ui table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.875rem;
+}
+
+.swagger-ui table thead tr {
+  background: var(--swagger-muted);
+  border-bottom: 1px solid var(--swagger-border);
+}
+
+.swagger-ui table thead th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--swagger-foreground);
+}
+
+.swagger-ui table tbody tr {
+  border-bottom: 1px solid var(--swagger-border);
+  transition: background 0.2s;
+}
+
+.swagger-ui table tbody tr:hover {
+  background: var(--swagger-muted);
+}
+
+.swagger-ui table tbody td {
+  padding: 0.75rem;
+  color: var(--swagger-foreground);
+}
+
+/* 모달 및 팝업 */
+.swagger-ui .dialog-ux {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.swagger-ui .dialog-ux .modal-ux {
+  background: var(--swagger-card);
+  border: 1px solid var(--swagger-border);
+  border-radius: var(--swagger-radius);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+}
+
+.swagger-ui .dialog-ux .modal-ux-header {
+  border-bottom: 1px solid var(--swagger-border);
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.swagger-ui .dialog-ux .modal-ux-header h3 {
+  color: var(--swagger-foreground);
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+/* 코드 블록 */
+.swagger-ui .highlight-code {
+  background: var(--swagger-muted);
+  border: 1px solid var(--swagger-border);
+  border-radius: var(--swagger-radius);
+  padding: 1rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+  overflow-x: auto;
+}
+
+.swagger-ui .highlight-code pre {
+  margin: 0;
+  color: var(--swagger-foreground);
+}
+
+/* 파라미터 섹션 */
+.swagger-ui .parameters {
+  background: var(--swagger-card);
+  border: 1px solid var(--swagger-border);
+  border-radius: var(--swagger-radius);
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.swagger-ui .parameters-col_description {
+  color: var(--swagger-muted-foreground);
+  font-size: 0.875rem;
+}
+
+/* 응답 섹션 */
+.swagger-ui .response-col_status {
+  font-weight: 600;
+  color: var(--swagger-foreground);
+}
+
+.swagger-ui .response-col_description {
+  color: var(--swagger-muted-foreground);
+  font-size: 0.875rem;
+}
+
+/* 스크롤바 스타일링 */
+.swagger-ui ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.swagger-ui ::-webkit-scrollbar-track {
+  background: var(--swagger-muted);
+  border-radius: 4px;
+}
+
+.swagger-ui ::-webkit-scrollbar-thumb {
+  background: var(--swagger-border);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.swagger-ui ::-webkit-scrollbar-thumb:hover {
+  background: var(--swagger-primary);
+}
+
+/* 링크 스타일 */
+.swagger-ui a {
+  color: var(--swagger-primary);
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.swagger-ui a:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* 배지 및 태그 */
+.swagger-ui .opblock-tag-section {
+  margin: 1.5rem 0;
+}
+
+.swagger-ui .opblock-summary {
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.swagger-ui .opblock-summary:hover {
+  background: var(--swagger-muted);
+}
+
+/* 스키마 섹션 */
+.swagger-ui .model-box {
+  background: var(--swagger-card);
+  border: 1px solid var(--swagger-border);
+  border-radius: var(--swagger-radius);
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.swagger-ui .model-title {
+  color: var(--swagger-foreground);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+/* 토글 버튼 */
+.swagger-ui .opblock-summary-control {
+  color: var(--swagger-foreground);
+}
+
+/* 로딩 애니메이션 */
+.swagger-ui .loading-container {
+  color: var(--swagger-muted-foreground);
+}
+
+/* 에러 메시지 */
+.swagger-ui .error-wrapper {
+  background: hsl(0 84.2% 60.2% / 0.1);
+  border: 1px solid var(--swagger-destructive);
+  border-radius: var(--swagger-radius);
+  padding: 1rem;
+  color: var(--swagger-destructive);
+}
+
+/* 성공 메시지 */
+.swagger-ui .success-wrapper {
+  background: hsl(142 76% 36% / 0.1);
+  border: 1px solid #10b981;
+  border-radius: var(--swagger-radius);
+  padding: 1rem;
+  color: #10b981;
+}
+

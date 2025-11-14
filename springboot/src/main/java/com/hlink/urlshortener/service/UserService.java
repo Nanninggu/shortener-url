@@ -39,6 +39,7 @@ public class UserService {
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .role("USER")
                 .planType(planType)
+                .enabled(true) // 기본적으로 활성화된 상태로 생성
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -53,7 +54,12 @@ public class UserService {
     }
 
     public Optional<User> findByUsername(String username) {
-        return userMapper.findByUsername(username);
+        try {
+            return userMapper.findByUsername(username);
+        } catch (Exception e) {
+            log.error("Error finding user by username {}: {}", username, e.getMessage(), e);
+            throw new RuntimeException("사용자 조회 중 오류가 발생했습니다: " + e.getMessage(), e);
+        }
     }
 
     public Optional<User> findByEmail(String email) {
@@ -61,7 +67,14 @@ public class UserService {
     }
 
     public List<User> findAll() {
-        return userMapper.findAll();
+        try {
+            List<User> users = userMapper.findAll();
+            log.debug("Found {} users", users != null ? users.size() : 0);
+            return users != null ? users : List.of();
+        } catch (Exception e) {
+            log.error("Error finding all users: {}", e.getMessage(), e);
+            throw new RuntimeException("사용자 목록을 조회하는 중 오류가 발생했습니다: " + e.getMessage(), e);
+        }
     }
 
     @Transactional
@@ -73,6 +86,36 @@ public class UserService {
     @Transactional
     public void deleteUser(Long id) {
         userMapper.deleteById(id);
+    }
+
+    @Transactional
+    public void toggleUserStatus(Long id) {
+        Optional<User> userOpt = userMapper.findById(id);
+        if (userOpt.isEmpty()) {
+            throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
+        }
+        userMapper.toggleEnabled(id);
+        log.info("User status toggled for user ID: {}", id);
+    }
+
+    @Transactional
+    public void updateUserRole(Long id, String role) {
+        Optional<User> userOpt = userMapper.findById(id);
+        if (userOpt.isEmpty()) {
+            throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
+        }
+        userMapper.updateRole(id, role);
+        log.info("User role updated for user ID: {} to role: {}", id, role);
+    }
+
+    @Transactional
+    public void updateUserPlanType(Long id, String planType) {
+        Optional<User> userOpt = userMapper.findById(id);
+        if (userOpt.isEmpty()) {
+            throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
+        }
+        userMapper.updatePlanType(id, planType);
+        log.info("User plan type updated for user ID: {} to plan: {}", id, planType);
     }
 }
 

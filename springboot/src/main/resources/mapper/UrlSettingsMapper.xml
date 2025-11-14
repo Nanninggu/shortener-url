@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hlink.urlshortener.mapper.UrlSettingsMapper">
+
+    <resultMap id="UrlSettingsResultMap" type="com.hlink.urlshortener.model.UrlSettings">
+        <id property="id" column="id"/>
+        <result property="urlId" column="url_id"/>
+        <result property="mobileDeeplink" column="mobile_deeplink"/>
+        <result property="desktopUrl" column="desktop_url"/>
+        <result property="tabletUrl" column="tablet_url"/>
+        <result property="iosUrl" column="ios_url"/>
+        <result property="androidUrl" column="android_url"/>
+        <result property="languageRedirects" column="language_redirects"/>
+        <result property="regionRedirects" column="region_redirects"/>
+        <result property="deviceRedirects" column="device_redirects"/>
+        <result property="dynamicQrEnabled" column="dynamic_qr_enabled"/>
+        <result property="qrCustomData" column="qr_custom_data"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hlink.urlshortener.model.UrlSettings" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO url_settings (
+            url_id, mobile_deeplink, desktop_url, tablet_url, ios_url, android_url,
+            language_redirects, region_redirects, device_redirects,
+            dynamic_qr_enabled, qr_custom_data, created_at, updated_at
+        )
+        VALUES (
+            #{urlId}, #{mobileDeeplink}, #{desktopUrl}, #{tabletUrl}, #{iosUrl}, #{androidUrl},
+            #{languageRedirects}, #{regionRedirects}, #{deviceRedirects},
+            #{dynamicQrEnabled}, #{qrCustomData}, #{createdAt}, #{updatedAt}
+        )
+    </insert>
+
+    <select id="findByUrlId" resultMap="UrlSettingsResultMap">
+        SELECT * FROM url_settings WHERE url_id = #{urlId}
+    </select>
+
+    <update id="update" parameterType="com.hlink.urlshortener.model.UrlSettings">
+        UPDATE url_settings
+        SET mobile_deeplink = #{mobileDeeplink},
+            desktop_url = #{desktopUrl},
+            tablet_url = #{tabletUrl},
+            ios_url = #{iosUrl},
+            android_url = #{androidUrl},
+            language_redirects = #{languageRedirects},
+            region_redirects = #{regionRedirects},
+            device_redirects = #{deviceRedirects},
+            dynamic_qr_enabled = #{dynamicQrEnabled},
+            qr_custom_data = #{qrCustomData},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteByUrlId">
+        DELETE FROM url_settings WHERE url_id = #{urlId}
+    </delete>
+
+</mapper>
+

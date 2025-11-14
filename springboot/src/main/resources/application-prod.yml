@@ -3,16 +3,21 @@ spring:
   application:
     name: url-shortener
   datasource:
-    url: jdbc:postgresql://localhost:5432/url_shortener
-    username: ${DB_USERNAME:urlshortener}
-    password: ${DB_PASSWORD:your_secure_password_here}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
+    # H2 데이터베이스 사용 (TCP 모드로 외부 접근 가능)
+    url: jdbc:h2:tcp://localhost:9092/./data/url_shortener;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;INIT=CREATE SCHEMA IF NOT EXISTS PUBLIC\;SET SCHEMA PUBLIC
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ${H2_PASSWORD:}
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true  # 외부 접근 허용
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema-h2.sql
   jackson:
     serialization:
       write-dates-as-timestamps: false
@@ -24,7 +29,7 @@ server:
     mime-types: application/json,application/xml,text/html,text/xml,text/plain
 
 app:
-  base-url: ${APP_BASE_URL:http://49.50.138.63}
+  base-url: ${APP_BASE_URL:http://223.130.157.227:8080}
   jwt:
     secret: ${JWT_SECRET:hlink-secret-key-for-jwt-token-generation-minimum-256-bits-required-for-security-change-this-in-production}
 

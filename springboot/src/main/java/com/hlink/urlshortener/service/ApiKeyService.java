@@ -66,9 +66,21 @@ public class ApiKeyService {
     public void deactivateApiKey(Long id) {
         Optional<ApiKey> keyOpt = apiKeyMapper.findById(id);
         if (keyOpt.isPresent()) {
-            ApiKey key = keyOpt.get();
-            key.setIsActive(false);
-            apiKeyMapper.update(key);
+            apiKeyMapper.updateActiveStatus(id, false);
+            log.info("API key deactivated: {}", id);
+        } else {
+            log.warn("API key not found for deactivation: {}", id);
+        }
+    }
+
+    @Transactional
+    public void activateApiKey(Long id) {
+        Optional<ApiKey> keyOpt = apiKeyMapper.findById(id);
+        if (keyOpt.isPresent()) {
+            apiKeyMapper.updateActiveStatus(id, true);
+            log.info("API key activated: {}", id);
+        } else {
+            log.warn("API key not found for activation: {}", id);
         }
     }
 
@@ -91,6 +103,10 @@ public class ApiKeyService {
         }
         
         return key.getIsActive();
+    }
+
+    public List<ApiKey> findAll() {
+        return apiKeyMapper.findAll();
     }
 
     private String generateApiKey() {

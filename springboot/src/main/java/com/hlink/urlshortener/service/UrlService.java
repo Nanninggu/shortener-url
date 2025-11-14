@@ -1,12 +1,16 @@
 package com.hlink.urlshortener.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hlink.urlshortener.dto.AdminStatsResponse;
+import com.hlink.urlshortener.dto.BulkUrlCreateResponse;
 import com.hlink.urlshortener.dto.UrlCreateRequest;
 import com.hlink.urlshortener.dto.UrlResponse;
 import com.hlink.urlshortener.mapper.UrlClickMapper;
 import com.hlink.urlshortener.mapper.UrlMapper;
+import com.hlink.urlshortener.mapper.UrlSettingsMapper;
 import com.hlink.urlshortener.model.Url;
 import com.hlink.urlshortener.model.UrlClick;
+import com.hlink.urlshortener.model.UrlSettings;
 import com.hlink.urlshortener.util.UserAgentParser;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +22,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -30,8 +35,12 @@ public class UrlService {
 
     private final UrlMapper urlMapper;
     private final UrlClickMapper urlClickMapper;
+    private final UrlSettingsMapper urlSettingsMapper;
     private final UrlValidationService urlValidationService;
     private final UserAgentParser userAgentParser;
+    private final TargetingService targetingService;
+    private final GeoLocationService geoLocationService;
+    private final ObjectMapper objectMapper;
 
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
@@ -45,6 +54,20 @@ public class UrlService {
         if (!urlValidationService.isValidUrl(request.getOriginalUrl())) {
                 log.warn("Invalid URL rejected: {}", request.getOriginalUrl());
             throw new IllegalArgumentException("유효하지 않거나 안전하지 않은 URL입니다.");
+        }
+        
+        // 커스텀 코드가 없는 경우, 같은 원본 URL이 이미 존재하는지 확인
+        if (request.getCustomCode() == null || request.getCustomCode().isEmpty()) {
+            Optional<Url> existingUrl = urlMapper.findByOriginalUrl(request.getOriginalUrl());
+            if (existingUrl.isPresent()) {
+                Url url = existingUrl.get();
+                // 만료되지 않은 URL이면 기존 URL 반환
+                if (url.getExpiresAt() == null || url.getExpiresAt().isAfter(LocalDateTime.now())) {
+                    log.info("Existing URL found for: {}, returning existing short code: {}", 
+                            request.getOriginalUrl(), url.getShortCode());
+                    return buildUrlResponse(url);
+                }
+            }
         }
         
         // 커스텀 단축 코드가 있는지 확인
@@ -84,6 +107,9 @@ public class UrlService {
                 throw new RuntimeException("데이터베이스에 URL을 저장하는 중 오류가 발생했습니다.");
             }
 
+            // 타겟팅 설정이 있으면 저장
+            saveUrlSettings(url.getId(), request);
+
             UrlResponse response = buildUrlResponse(url);
             log.info("Short URL created successfully: {} -> {}", shortCode, response.getShortUrl());
             return response;
@@ -95,6 +121,52 @@ public class UrlService {
             log.error("Error creating short URL: {}", e.getMessage(), e);
             throw new RuntimeException("단축 URL 생성 중 오류가 발생했습니다: " + e.getMessage(), e);
         }
+    }
+
+    @Transactional
+    public BulkUrlCreateResponse bulkCreateShortUrls(List<UrlCreateRequest> requests) {
+        log.info("Bulk creating {} URLs", requests.size());
+        
+        List<UrlResponse> successfulUrls = new ArrayList<>();
+        List<BulkUrlCreateResponse.BulkUrlError> errors = new ArrayList<>();
+        
+        for (int i = 0; i < requests.size(); i++) {
+            UrlCreateRequest request = requests.get(i);
+            try {
+                UrlResponse response = createShortUrl(request);
+                successfulUrls.add(response);
+                log.debug("Successfully created URL {}: {}", i + 1, response.getShortUrl());
+            } catch (IllegalArgumentException e) {
+                // 검증 오류
+                errors.add(BulkUrlCreateResponse.BulkUrlError.builder()
+                        .index(i)
+                        .originalUrl(request.getOriginalUrl())
+                        .error(e.getMessage())
+                        .build());
+                log.warn("Failed to create URL {}: {}", i + 1, e.getMessage());
+            } catch (Exception e) {
+                // 기타 오류
+                errors.add(BulkUrlCreateResponse.BulkUrlError.builder()
+                        .index(i)
+                        .originalUrl(request.getOriginalUrl())
+                        .error("URL 생성 중 오류가 발생했습니다: " + e.getMessage())
+                        .build());
+                log.error("Error creating URL {}: {}", i + 1, e.getMessage());
+            }
+        }
+        
+        BulkUrlCreateResponse response = BulkUrlCreateResponse.builder()
+                .total(requests.size())
+                .success(successfulUrls.size())
+                .failed(errors.size())
+                .successfulUrls(successfulUrls)
+                .errors(errors)
+                .build();
+        
+        log.info("Bulk creation completed: {} successful, {} failed out of {}", 
+                response.getSuccess(), response.getFailed(), response.getTotal());
+        
+        return response;
     }
 
     @Transactional
@@ -132,8 +204,26 @@ public class UrlService {
         }
 
         String originalUrl = url.getOriginalUrl();
-        log.info("Returning original URL: {}", originalUrl);
-        return Optional.of(originalUrl);
+        
+        // 타겟팅 설정이 있으면 타겟팅 서비스 사용
+        String targetedUrl = originalUrl;
+        try {
+            Optional<UrlSettings> settingsOpt = urlSettingsMapper.findByUrlId(url.getId());
+            if (settingsOpt.isPresent()) {
+                UrlSettings settings = settingsOpt.get();
+                String targetingSettingsJson = buildTargetingSettingsJson(settings);
+                if (targetingSettingsJson != null && !targetingSettingsJson.isEmpty()) {
+                    targetedUrl = targetingService.getTargetedUrl(originalUrl, targetingSettingsJson, request);
+                    log.debug("Targeting applied: {} -> {}", originalUrl, targetedUrl);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error applying targeting for URL ID {}: {}", url.getId(), e.getMessage());
+            // 타겟팅 실패 시 기본 URL 사용
+        }
+        
+        log.info("Returning original URL: {} (targeted: {})", originalUrl, targetedUrl);
+        return Optional.of(targetedUrl);
     }
 
     private void recordClick(Long urlId, HttpServletRequest request) {
@@ -144,14 +234,25 @@ public class UrlService {
             String acceptLanguage = request.getHeader("Accept-Language");
             String language = parseLanguage(acceptLanguage);
             
+            // IP 기반 지역 정보 조회 (비동기로 처리하여 응답 속도에 영향 없도록)
+            String country = null;
+            String city = null;
+            try {
+                country = geoLocationService.getCountryCode(ipAddress);
+                city = geoLocationService.getCity(ipAddress);
+            } catch (Exception e) {
+                log.debug("Failed to get geo location for IP {}: {}", ipAddress, e.getMessage());
+                // 지역 정보 조회 실패해도 클릭 기록은 계속 진행
+            }
+            
             UrlClick click = UrlClick.builder()
                     .urlId(urlId)
                     .clickedAt(LocalDateTime.now())
                     .ipAddress(ipAddress)
                     .userAgent(userAgent)
                     .referer(referer)
-                    .country("Unknown") // IP 기반 지역 정보는 외부 API 필요
-                    .city("Unknown")
+                    .country(country) // IP 기반 지역 정보 (VARCHAR(2)이므로 국가 코드만 저장)
+                    .city(city) // 도시명
                     .deviceType(userAgentParser.parseDeviceType(userAgent))
                     .deviceBrand(userAgentParser.parseDeviceBrand(userAgent))
                     .os(userAgentParser.parseOS(userAgent))
@@ -159,9 +260,12 @@ public class UrlService {
                     .language(language)
                     .build();
             
+            log.debug("Recording click for URL ID: {}, deviceType: {}, os: {}, browser: {}, country: {}, city: {}", 
+                    urlId, click.getDeviceType(), click.getOs(), click.getBrowser(), country, city);
             urlClickMapper.insert(click);
+            log.debug("Click recorded successfully for URL ID: {}", urlId);
         } catch (Exception e) {
-            log.error("Failed to record click: {}", e.getMessage());
+            log.error("Failed to record click for URL ID {}: {}", urlId, e.getMessage(), e);
         }
     }
 
@@ -210,6 +314,103 @@ public class UrlService {
         } catch (Exception e) {
             log.error("Error getting all URLs: {}", e.getMessage(), e);
             return java.util.Collections.emptyList();
+        }
+    }
+    
+    public com.hlink.urlshortener.dto.PageResponse<UrlResponse> getAllUrlsWithPaging(int page, int size) {
+        try {
+            int offset = page * size;
+            List<Url> urls = urlMapper.findAllWithPaging(offset, size);
+            long totalElements = urlMapper.countAll();
+            
+            List<UrlResponse> urlResponses = urls.stream()
+                .map(this::buildUrlResponse)
+                .collect(Collectors.toList());
+            
+            return com.hlink.urlshortener.dto.PageResponse.of(urlResponses, page, size, totalElements);
+        } catch (Exception e) {
+            log.error("Error getting URLs with paging: {}", e.getMessage(), e);
+            return com.hlink.urlshortener.dto.PageResponse.of(java.util.Collections.emptyList(), page, size, 0);
+        }
+    }
+    
+    public com.hlink.urlshortener.dto.PageResponse<UrlResponse> getAllUrlsWithPagingAndFilter(
+            int page, int size, String searchQuery, String statusFilter) {
+        try {
+            int offset = page * size;
+            List<Url> urls = urlMapper.findAllWithPagingAndFilter(offset, size, searchQuery, statusFilter);
+            long totalElements = urlMapper.countAllWithFilter(searchQuery, statusFilter);
+            
+            List<UrlResponse> urlResponses = urls.stream()
+                .map(this::buildUrlResponse)
+                .collect(Collectors.toList());
+            
+            return com.hlink.urlshortener.dto.PageResponse.of(urlResponses, page, size, totalElements);
+        } catch (Exception e) {
+            log.error("Error getting URLs with paging and filter: {}", e.getMessage(), e);
+            return com.hlink.urlshortener.dto.PageResponse.of(java.util.Collections.emptyList(), page, size, 0);
+        }
+    }
+
+    public List<UrlResponse> getUrlsByUserId(Long userId) {
+        try {
+            List<Url> urls = urlMapper.findByUserId(userId);
+            if (urls == null || urls.isEmpty()) {
+                return java.util.Collections.emptyList();
+            }
+            return urls.stream()
+                .map(this::buildUrlResponse)
+                .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error getting URLs for user {}: {}", userId, e.getMessage(), e);
+            return java.util.Collections.emptyList();
+        }
+    }
+
+    public AdminStatsResponse getUserStats(Long userId) {
+        try {
+            Long totalUrls = urlMapper.countByUserId(userId);
+            Long totalClicks = urlMapper.sumClickCountByUserId(userId);
+            
+            // null 값 처리
+            if (totalUrls == null) {
+                totalUrls = 0L;
+            }
+            if (totalClicks == null) {
+                totalClicks = 0L;
+            }
+        
+            List<Url> userUrls = urlMapper.findByUserId(userId);
+            LocalDateTime now = LocalDateTime.now();
+        
+            long activeUrls = 0;
+            long expiredUrls = 0;
+        
+            if (userUrls != null) {
+                activeUrls = userUrls.stream()
+                    .filter(url -> url.getExpiresAt() == null || url.getExpiresAt().isAfter(now))
+                    .count();
+        
+                expiredUrls = userUrls.stream()
+                    .filter(url -> url.getExpiresAt() != null && url.getExpiresAt().isBefore(now))
+                    .count();
+            }
+        
+            return AdminStatsResponse.builder()
+                    .totalUrls(totalUrls)
+                    .totalClicks(totalClicks)
+                    .activeUrls(activeUrls)
+                    .expiredUrls(expiredUrls)
+                    .build();
+        } catch (Exception e) {
+            log.error("Error getting user stats for user {}: {}", userId, e.getMessage(), e);
+            // 에러 발생 시 기본값 반환
+            return AdminStatsResponse.builder()
+                    .totalUrls(0L)
+                    .totalClicks(0L)
+                    .activeUrls(0L)
+                    .expiredUrls(0L)
+                    .build();
         }
     }
 
@@ -342,6 +543,176 @@ public class UrlService {
         
         // 요청 컨텍스트가 없으면 기본 baseUrl 사용
         return baseUrl + "/" + shortCode;
+    }
+
+    /**
+     * URL 타겟팅 설정 저장
+     */
+    private void saveUrlSettings(Long urlId, UrlCreateRequest request) {
+        // 타겟팅 설정이 하나라도 있으면 저장
+        boolean hasSettings = request.getMobileDeeplink() != null || 
+                             request.getDesktopUrl() != null ||
+                             request.getTabletUrl() != null ||
+                             request.getIosUrl() != null ||
+                             request.getAndroidUrl() != null ||
+                             request.getLanguageRedirects() != null ||
+                             request.getRegionRedirects() != null ||
+                             request.getDeviceRedirects() != null ||
+                             (request.getDynamicQrEnabled() != null && request.getDynamicQrEnabled()) ||
+                             request.getQrCustomData() != null;
+
+        if (!hasSettings) {
+            return; // 타겟팅 설정이 없으면 저장하지 않음
+        }
+
+        try {
+            // device_redirects JSON 구성
+            String deviceRedirectsJson = buildDeviceRedirectsJson(request);
+            
+            UrlSettings settings = UrlSettings.builder()
+                    .urlId(urlId)
+                    .mobileDeeplink(request.getMobileDeeplink())
+                    .desktopUrl(request.getDesktopUrl())
+                    .tabletUrl(request.getTabletUrl())
+                    .iosUrl(request.getIosUrl())
+                    .androidUrl(request.getAndroidUrl())
+                    .languageRedirects(request.getLanguageRedirects())
+                    .regionRedirects(request.getRegionRedirects())
+                    .deviceRedirects(deviceRedirectsJson)
+                    .dynamicQrEnabled(request.getDynamicQrEnabled() != null ? request.getDynamicQrEnabled() : false)
+                    .qrCustomData(request.getQrCustomData())
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+
+            urlSettingsMapper.insert(settings);
+            log.debug("URL settings saved for URL ID: {}", urlId);
+        } catch (Exception e) {
+            log.error("Error saving URL settings for URL ID {}: {}", urlId, e.getMessage());
+            // 타겟팅 설정 저장 실패해도 URL 생성은 성공으로 처리
+        }
+    }
+
+    /**
+     * device_redirects JSON 문자열 구성
+     */
+    private String buildDeviceRedirectsJson(UrlCreateRequest request) {
+        try {
+            java.util.Map<String, String> deviceRedirects = new java.util.HashMap<>();
+            
+            if (request.getMobileDeeplink() != null && !request.getMobileDeeplink().isEmpty()) {
+                // mobile_deeplink는 별도 필드로 저장되므로 device_redirects에는 포함하지 않음
+            }
+            if (request.getDesktopUrl() != null && !request.getDesktopUrl().isEmpty()) {
+                deviceRedirects.put("desktop", request.getDesktopUrl());
+            }
+            if (request.getTabletUrl() != null && !request.getTabletUrl().isEmpty()) {
+                deviceRedirects.put("tablet", request.getTabletUrl());
+            }
+            if (request.getIosUrl() != null && !request.getIosUrl().isEmpty()) {
+                deviceRedirects.put("ios", request.getIosUrl());
+            }
+            if (request.getAndroidUrl() != null && !request.getAndroidUrl().isEmpty()) {
+                deviceRedirects.put("android", request.getAndroidUrl());
+            }
+            
+            // mobile은 mobileDeeplink가 있으면 포함
+            if (request.getMobileDeeplink() != null && !request.getMobileDeeplink().isEmpty()) {
+                deviceRedirects.put("mobile", request.getMobileDeeplink());
+            }
+            
+            if (deviceRedirects.isEmpty()) {
+                return request.getDeviceRedirects(); // 사용자가 직접 제공한 경우
+            }
+            
+            return objectMapper.writeValueAsString(deviceRedirects);
+        } catch (Exception e) {
+            log.error("Error building device redirects JSON: {}", e.getMessage());
+            return request.getDeviceRedirects(); // 실패 시 사용자 제공 값 반환
+        }
+    }
+
+    /**
+     * 타겟팅 설정을 JSON 문자열로 변환 (TargetingService에 전달)
+     */
+    private String buildTargetingSettingsJson(UrlSettings settings) {
+        try {
+            java.util.Map<String, Object> targetingMap = new java.util.HashMap<>();
+            
+            // 모바일 딥링크
+            if (settings.getMobileDeeplink() != null && !settings.getMobileDeeplink().isEmpty()) {
+                targetingMap.put("mobile_deeplink", settings.getMobileDeeplink());
+            }
+            
+            // device_redirects
+            if (settings.getDeviceRedirects() != null && !settings.getDeviceRedirects().isEmpty()) {
+                try {
+                    java.util.Map<String, String> deviceRedirects = objectMapper.readValue(
+                        settings.getDeviceRedirects(), 
+                        new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, String>>() {}
+                    );
+                    targetingMap.put("device_redirects", deviceRedirects);
+                } catch (Exception e) {
+                    log.warn("Error parsing device_redirects JSON: {}", e.getMessage());
+                }
+            } else {
+                // 개별 필드로부터 device_redirects 구성
+                java.util.Map<String, String> deviceRedirects = new java.util.HashMap<>();
+                if (settings.getDesktopUrl() != null && !settings.getDesktopUrl().isEmpty()) {
+                    deviceRedirects.put("desktop", settings.getDesktopUrl());
+                }
+                if (settings.getTabletUrl() != null && !settings.getTabletUrl().isEmpty()) {
+                    deviceRedirects.put("tablet", settings.getTabletUrl());
+                }
+                if (settings.getIosUrl() != null && !settings.getIosUrl().isEmpty()) {
+                    deviceRedirects.put("ios", settings.getIosUrl());
+                }
+                if (settings.getAndroidUrl() != null && !settings.getAndroidUrl().isEmpty()) {
+                    deviceRedirects.put("android", settings.getAndroidUrl());
+                }
+                if (settings.getMobileDeeplink() != null && !settings.getMobileDeeplink().isEmpty()) {
+                    deviceRedirects.put("mobile", settings.getMobileDeeplink());
+                }
+                if (!deviceRedirects.isEmpty()) {
+                    targetingMap.put("device_redirects", deviceRedirects);
+                }
+            }
+            
+            // language_redirects
+            if (settings.getLanguageRedirects() != null && !settings.getLanguageRedirects().isEmpty()) {
+                try {
+                    java.util.Map<String, String> languageRedirects = objectMapper.readValue(
+                        settings.getLanguageRedirects(),
+                        new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, String>>() {}
+                    );
+                    targetingMap.put("language_redirects", languageRedirects);
+                } catch (Exception e) {
+                    log.warn("Error parsing language_redirects JSON: {}", e.getMessage());
+                }
+            }
+            
+            // region_redirects
+            if (settings.getRegionRedirects() != null && !settings.getRegionRedirects().isEmpty()) {
+                try {
+                    java.util.Map<String, String> regionRedirects = objectMapper.readValue(
+                        settings.getRegionRedirects(),
+                        new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, String>>() {}
+                    );
+                    targetingMap.put("region_redirects", regionRedirects);
+                } catch (Exception e) {
+                    log.warn("Error parsing region_redirects JSON: {}", e.getMessage());
+                }
+            }
+            
+            if (targetingMap.isEmpty()) {
+                return null;
+            }
+            
+            return objectMapper.writeValueAsString(targetingMap);
+        } catch (Exception e) {
+            log.error("Error building targeting settings JSON: {}", e.getMessage());
+            return null;
+        }
     }
 }
 

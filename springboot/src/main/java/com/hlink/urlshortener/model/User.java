@@ -18,6 +18,7 @@ public class User {
     private String passwordHash;
     private String role; // USER, ADMIN, PREMIUM
     private String planType; // FREE, BASIC, PRO, ENTERPRISE
+    private Boolean enabled; // 계정 활성화 여부
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

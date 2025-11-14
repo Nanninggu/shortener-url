@@ -3,8 +3,8 @@
     <div class="w-full max-w-md">
       <div class="bg-card border rounded-lg shadow-sm p-8">
         <div class="text-center mb-8">
-          <h1 class="text-3xl font-bold text-foreground mb-2">관리자 로그인</h1>
-          <p class="text-muted-foreground">H-Link 관리자 페이지에 접속하세요</p>
+          <h1 class="text-3xl font-bold text-foreground mb-2">로그인</h1>
+          <p class="text-muted-foreground">H-Link에 로그인하세요</p>
         </div>
 
         <form @submit.prevent="login" class="space-y-6">
@@ -39,18 +39,30 @@
           <button
             type="submit"
             :disabled="loading"
-            class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full"
+            class="inline-flex items-center gap-2 justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full"
           >
+            <Loading v-if="loading" class="h-4 w-4 animate-spin" />
+            <UserFilled v-else class="h-4 w-4" />
             {{ loading ? '로그인 중...' : '로그인' }}
           </button>
         </form>
 
         <div class="mt-6 text-center">
           <router-link
-            to="/"
+            to="/register"
             class="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            ← 홈으로 돌아가기
+            계정이 없으신가요? 회원가입
+          </router-link>
+        </div>
+
+        <div class="mt-4 text-center">
+          <router-link
+            to="/"
+            class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft class="h-4 w-4" />
+            홈으로 돌아가기
           </router-link>
         </div>
 
@@ -92,7 +104,31 @@ export default {
         const response = await authService.login(this.username, this.password)
         if (response.data && response.data.token) {
           localStorage.setItem('authToken', response.data.token)
-          this.$router.push('/admin')
+          // 사용자 ID 저장
+          if (response.data.userId) {
+            localStorage.setItem('userId', response.data.userId.toString())
+          }
+          // 사용자명 저장
+          if (response.data.username) {
+            localStorage.setItem('username', response.data.username)
+          }
+          // 역할 저장
+          if (response.data.role) {
+            localStorage.setItem('userRole', response.data.role)
+          }
+          
+          // 로그인 상태 변경 이벤트 발생 (App.vue에서 감지)
+          window.dispatchEvent(new Event('auth-changed'))
+          
+          // 리다이렉트 처리
+          const redirect = this.$route.query.redirect
+          if (redirect) {
+            this.$router.push(redirect)
+          } else if (response.data.role === 'ADMIN') {
+            this.$router.push('/admin')
+          } else {
+            this.$router.push('/')
+          }
         } else {
           this.error = '로그인 응답이 올바르지 않습니다.'
         }
