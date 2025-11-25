@@ -84,8 +84,6 @@ springdoc:
     urls-primary-name: H-Link URL Shortener API
     # 기본 예제 URL 완전 제거
     default-url: /v3/api-docs
-    # Swagger UI가 요청하는 리소스들의 경로 지정
-    urls-primary-name: H-Link URL Shortener API
   packages-to-scan: com.hlink.urlshortener.controller
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
