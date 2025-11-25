@@ -163,7 +163,7 @@
     <footer class="border-t bg-card mt-auto">
       <div class="container mx-auto px-4 py-6">
         <p class="text-center text-sm text-muted-foreground">
-          &copy; 2025 H-Link. URL Shortener Service
+          Copyright © 2025 Hanjin Information Systems & Telecommunication Co., Ltd. All rights Reserved.
         </p>
       </div>
     </footer>

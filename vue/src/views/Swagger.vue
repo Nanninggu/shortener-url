@@ -61,14 +61,10 @@ export default {
   computed: {
     swaggerUrl() {
       // 환경에 따라 다른 Swagger UI URL 사용
-      if (import.meta.env.PROD && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        // 프로덕션: Spring Boot 포트로 직접 접근 (nginx 우회하여 리디렉션 문제 해결)
-        const hostname = window.location.hostname;
-        return `http://${hostname}:8080/swagger-ui/index.html`;
-      } else {
-        // 개발 환경: Vite 프록시를 통해 접근 (같은 origin으로 처리)
-        return '/swagger-ui/index.html';
-      }
+      // 항상 Spring Boot 포트로 직접 접근하여 정적 리소스 문제 해결
+      const hostname = window.location.hostname;
+      const port = import.meta.env.PROD ? '' : ':8080';
+      return `http://${hostname}${port}/swagger-ui/index.html`;
     }
   },
   mounted() {
