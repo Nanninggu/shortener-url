@@ -328,23 +328,20 @@ export const userService = {
 export const openApiService = {
   // OpenAPI 스펙 가져오기
   async getOpenApiSpec() {
-    // 환경에 따라 다른 경로 사용
-    let baseUrl
-    if (import.meta.env.VITE_API_BASE_URL) {
-      baseUrl = import.meta.env.VITE_API_BASE_URL
-    } else if (import.meta.env.PROD && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      baseUrl = `${window.location.protocol}//${window.location.hostname}:8080`
-    } else {
-      // 개발 환경: 백엔드 서버로 직접 접근 또는 프록시 사용
-      // Vite 프록시를 통해 /v3 경로도 프록시되므로 window.location.origin 사용
-      baseUrl = window.location.origin
-    }
+    // 프로덕션과 개발 환경 모두 상대 경로 사용 (nginx 프록시 활용)
+    // nginx가 /v3/api-docs 요청을 Spring Boot로 프록시
+    const url = '/v3/api-docs'
     
-    const response = await fetch(`${baseUrl}/v3/api-docs`)
-    if (!response.ok) {
-      throw new Error(`Failed to fetch OpenAPI spec: ${response.status} ${response.statusText}`)
+    try {
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch OpenAPI spec: ${response.status} ${response.statusText}`)
+      }
+      return response.json()
+    } catch (error) {
+      console.error('OpenAPI spec fetch failed:', error)
+      throw error
     }
-    return response.json()
   }
 }
 
